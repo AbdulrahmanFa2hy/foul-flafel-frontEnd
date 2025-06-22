@@ -318,9 +318,8 @@ class ThermalPrintingService {
   /**
    * Generate receipt HTML with proper Arabic support
    */
-  generateReceiptHTML(orderData, options = {}) {
+  generateReceiptHTML(orderData) {
     const hasArabic = this.detectArabicContent(orderData);
-    const rtlClass = hasArabic ? "rtl" : "ltr";
 
     return `
 <!DOCTYPE html>
@@ -467,10 +466,10 @@ class ThermalPrintingService {
         
         @media print {
             body { width: ${this.settings.paperWidth}mm; }
-        }
-    </style>
-</head>
-<body>
+              }
+            </style>
+          </head>
+          <body>
     <!-- Header Section -->
     <div class="header">
         ${
@@ -489,7 +488,7 @@ class ThermalPrintingService {
         <div class="store-info">Tel: ${this.settings.storePhone}</div>
         `
         }
-    </div>
+            </div>
 
     <!-- Order Information -->
     <div class="order-info">
@@ -634,7 +633,7 @@ class ThermalPrintingService {
   /**
    * Convert HTML to Canvas (for canvas printing method)
    */
-  async htmlToCanvas(element) {
+  async htmlToCanvas() {
     // This would require html2canvas library in a real implementation
     // For now, we'll use a placeholder approach
     const canvas = document.createElement("canvas");
@@ -658,7 +657,7 @@ class ThermalPrintingService {
   /**
    * Generate raw ESC/POS commands (basic fallback)
    */
-  generateRawCommands(orderData, options = {}) {
+  generateRawCommands(orderData) {
     const commands = [];
 
     // Initialize printer
@@ -920,9 +919,12 @@ class ThermalPrintingService {
 
       // QZ Tray doesn't have direct status checking
       // We'll try a simple test to see if printer responds
-      const testConfig = this.qzInstance.configs.create(printerName);
+      // TODO: Implement actual printer status checking using printerName
+      // const testConfig = this.qzInstance.configs.create(printerName);
 
       // This is a workaround - actual implementation depends on QZ Tray version
+      // For now, we assume all printers are online (printerName is for future use)
+      console.log(`Checking status for printer: ${printerName}`);
       return { online: true, ready: true, paper: true };
     } catch (error) {
       this.log("❌ Could not get printer status:", error);
@@ -933,6 +935,189 @@ class ThermalPrintingService {
         error: error.message,
       };
     }
+  }
+
+  /**
+   * Get receipt settings from localStorage or return defaults
+   */
+  getReceiptSettings() {
+    try {
+      const stored = localStorage.getItem("receiptSettings");
+      const defaultSettings = {
+        header: {
+          businessName: this.settings.storeName,
+          businessNameAr: this.settings.storeNameAr,
+          address: this.settings.storeAddress,
+          addressAr: this.settings.storeAddressAr,
+          city: "",
+          phone: this.settings.storePhone,
+          phoneAr: this.settings.storePhoneAr,
+          taxId: this.settings.taxNumber,
+          customText: "",
+        },
+        footer: {
+          thankYouMessage: "Thank you for your visit!",
+          thankYouMessageAr: "شكراً لزيارتكم!",
+          returnPolicy: "",
+          customerService: "",
+          website: "",
+          customText: "",
+        },
+        display: {
+          showCashierName: true,
+          showCustomerInfo: true,
+          showTaxDetails: true,
+          enableArabicSupport: this.settings.enableArabicSupport,
+        },
+      };
+
+      return stored
+        ? { ...defaultSettings, ...JSON.parse(stored) }
+        : defaultSettings;
+    } catch (error) {
+      this.log("⚠️ Failed to load receipt settings:", error);
+      return this.getDefaultReceiptSettings();
+    }
+  }
+
+  /**
+   * Save receipt settings to localStorage
+   */
+  saveReceiptSettings(settings) {
+    try {
+      localStorage.setItem("receiptSettings", JSON.stringify(settings));
+      this.log("💾 Receipt settings saved successfully");
+      return true;
+    } catch (error) {
+      this.log("❌ Failed to save receipt settings:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get default receipt settings
+   */
+  getDefaultReceiptSettings() {
+    return {
+      header: {
+        businessName: this.settings.storeName,
+        businessNameAr: this.settings.storeNameAr,
+        address: this.settings.storeAddress,
+        addressAr: this.settings.storeAddressAr,
+        city: "",
+        phone: this.settings.storePhone,
+        phoneAr: this.settings.storePhoneAr,
+        taxId: this.settings.taxNumber,
+        customText: "",
+      },
+      footer: {
+        thankYouMessage: "Thank you for your visit!",
+        thankYouMessageAr: "شكراً لزيارتكم!",
+        returnPolicy: "",
+        customerService: "",
+        website: "",
+        customText: "",
+      },
+      display: {
+        showCashierName: true,
+        showCustomerInfo: true,
+        showTaxDetails: true,
+        enableArabicSupport: this.settings.enableArabicSupport,
+      },
+    };
+  }
+
+  /**
+   * Generate customer receipt content for preview
+   */
+  generateCustomerReceipt(orderData) {
+    return this.generateReceiptHTML(orderData, { type: "customer" });
+  }
+
+  /**
+   * Preview receipt in new window
+   */
+  previewReceipt(htmlContent) {
+    const previewWindow = window.open(
+      "",
+      "_blank",
+      "width=400,height=600,scrollbars=yes"
+    );
+    if (previewWindow) {
+      previewWindow.document.write(htmlContent);
+      previewWindow.document.close();
+      previewWindow.focus();
+    } else {
+      this.log("❌ Could not open preview window. Please allow popups.");
+    }
+  }
+
+  /**
+   * Test print functionality with basic test data
+   */
+  async testPrint(printer) {
+    const testData = {
+      orderNumber: "TEST-001",
+      cashier: "Test User",
+      cashierAr: "المستخدم التجريبي",
+      orderItems: [
+        {
+          name: "Test Item",
+          nameAr: "عنصر تجريبي",
+          quantity: 1,
+          price: 10.0,
+        },
+      ],
+      subtotal: 10.0,
+      tax: 1.5,
+      total: 11.5,
+    };
+
+    const printerName = typeof printer === "string" ? printer : printer.name;
+    return await this.printReceipt(testData, printerName);
+  }
+
+  /**
+   * Test Arabic printing with comprehensive Arabic content
+   */
+  async printArabicTest(printerName = null) {
+    const testData = {
+      orderNumber: "AR-001",
+      cashier: "Ahmed Ali",
+      cashierAr: "أحمد علي",
+      orderItems: [
+        {
+          name: "Foul with Tahini",
+          nameAr: "فول بالطحينة",
+          quantity: 2,
+          price: 15.0,
+        },
+        {
+          name: "Falafel Sandwich",
+          nameAr: "ساندويش فلافل",
+          quantity: 1,
+          price: 8.5,
+        },
+        {
+          name: "Arabic Coffee",
+          nameAr: "قهوة عربية",
+          quantity: 1,
+          price: 5.0,
+        },
+        {
+          name: "Hummus Plate",
+          nameAr: "طبق حمص",
+          quantity: 1,
+          price: 12.0,
+        },
+      ],
+      subtotal: 48.5,
+      tax: 7.28,
+      total: 55.78,
+    };
+
+    this.log("🧪 Testing Arabic receipt printing with comprehensive data...");
+    return await this.printReceipt(testData, printerName);
   }
 }
 
