@@ -330,10 +330,21 @@ class ThermalPrintingService {
    * Generate receipt HTML with proper Arabic support
    * Fixed version addressing encoding and layout issues
    */
-  generateReceiptHTML(orderData) {
-    const hasArabic = this.detectArabicContent(orderData);
+  generateReceiptHTML(orderData, options = {}) {
+    const receiptType = options.type || "customer";
 
-    // Ensure we have valid data to prevent "ee.ee" issues
+    if (receiptType === "kitchen") {
+      return this.generateKitchenTicketHTML(orderData);
+    } else {
+      return this.generateCustomerReceiptHTML(orderData);
+    }
+  }
+
+  /**
+   * Generate customer receipt HTML with full details and payment information
+   */
+  generateCustomerReceiptHTML(orderData) {
+    const hasArabic = this.detectArabicContent(orderData);
     const safeOrderData = this.sanitizeOrderData(orderData);
 
     return `<!DOCTYPE html>
@@ -341,7 +352,7 @@ class ThermalPrintingService {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt</title>
+    <title>Customer Receipt</title>
     <style>
         /* Embedded Arabic font to ensure proper rendering */
         @font-face {
@@ -362,127 +373,162 @@ class ThermalPrintingService {
                 ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
                 : "Arial, sans-serif"
             };
-            font-size: 11px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.3;
             color: #000;
             background: #fff;
             width: ${this.settings.paperWidth}mm;
-            padding: 3mm;
+            padding: 1mm;
             direction: ${hasArabic ? "rtl" : "ltr"};
+            max-width: ${this.settings.paperWidth}mm;
+            overflow: hidden;
         }
         
         .header {
             text-align: center;
             border-bottom: 1px solid #000;
-            padding-bottom: 3mm;
-            margin-bottom: 3mm;
+            padding-bottom: 2mm;
+            margin-bottom: 2mm;
         }
         
         .store-name {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             margin-bottom: 1mm;
+            word-wrap: break-word;
         }
         
         .store-name.arabic {
-            font-size: 16px;
+            font-size: 14px;
             direction: rtl;
             text-align: center;
         }
         
         .store-info {
-            font-size: 10px;
-            margin-bottom: 1mm;
+            font-size: 9px;
+            margin-bottom: 0.5mm;
+            word-wrap: break-word;
         }
         
         .separator {
             text-align: center;
-            margin: 2mm 0;
+            margin: 1mm 0;
             font-size: 8px;
+            overflow: hidden;
         }
         
         .order-info {
-            margin: 3mm 0;
-            font-size: 10px;
+            margin: 2mm 0;
+            font-size: 9px;
         }
         
         .order-line {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1mm;
+            margin-bottom: 0.5mm;
+            word-wrap: break-word;
         }
         
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 3mm 0;
-            font-size: 10px;
+        .items-section {
+            margin: 2mm 0;
         }
         
-        .items-table th {
+        .items-header {
+            display: flex;
             border-bottom: 1px solid #000;
-            padding: 2mm 1mm;
+            padding: 1mm 0;
             font-weight: bold;
-            text-align: center;
+            font-size: 9px;
+            background: #f5f5f5;
         }
         
-        .items-table td {
-            padding: 2mm 1mm;
+        .items-row {
+            display: flex;
             border-bottom: 1px dotted #ccc;
-            vertical-align: top;
+            padding: 1mm 0;
+            font-size: 9px;
+            align-items: flex-start;
+        }
+        
+        .col-item {
+            flex: 1;
+            padding-right: 2mm;
+            word-wrap: break-word;
+            overflow: hidden;
+        }
+        
+        .col-qty {
+            width: 12mm;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .col-price {
+            width: 18mm;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        .col-total {
+            width: 20mm;
+            text-align: right;
+            flex-shrink: 0;
         }
         
         .item-name {
-            text-align: ${hasArabic ? "right" : "left"};
             font-weight: bold;
+            word-wrap: break-word;
+            overflow: hidden;
         }
         
         .item-name-secondary {
-            font-size: 9px;
+            font-size: 8px;
             color: #666;
             font-weight: normal;
-            margin-top: 1mm;
-        }
-        
-        .number-cell {
-            text-align: center;
-            font-family: Arial, monospace;
+            margin-top: 0.5mm;
         }
         
         .totals {
             border-top: 1px solid #000;
-            margin-top: 3mm;
-            padding-top: 2mm;
+            margin-top: 2mm;
+            padding-top: 1mm;
         }
         
         .total-line {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 1mm;
-            font-size: 10px;
+            margin-bottom: 0.5mm;
+            font-size: 9px;
         }
         
         .total-line.final {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             border-top: 1px solid #000;
-            padding-top: 2mm;
+            padding-top: 1mm;
+            margin-top: 1mm;
+        }
+        
+        .payment-section {
             margin-top: 2mm;
+            border-top: 1px dashed #000;
+            padding-top: 1mm;
+            font-size: 9px;
         }
         
         .footer {
             text-align: center;
-            margin-top: 4mm;
-            padding-top: 3mm;
+            margin-top: 3mm;
+            padding-top: 2mm;
             border-top: 1px dashed #000;
-            font-size: 10px;
+            font-size: 9px;
         }
         
         .datetime {
             text-align: center;
-            font-size: 9px;
+            font-size: 8px;
             color: #666;
-            margin: 2mm 0;
+            margin: 1mm 0;
         }
         
         .arabic-text {
@@ -495,17 +541,19 @@ class ThermalPrintingService {
             text-align: left;
         }
         
-        /* Ensure proper Arabic number display */
-        .arabic-number {
-            font-family: Arial, monospace;
-            direction: ltr;
+        .customer-info {
+            margin: 2mm 0;
+            font-size: 9px;
+            border-top: 1px dashed #000;
+            padding-top: 1mm;
         }
         
         @media print {
             body { 
                 width: ${this.settings.paperWidth}mm; 
                 margin: 0;
-                padding: 3mm;
+                padding: 1mm;
+                max-width: ${this.settings.paperWidth}mm;
             }
         }
     </style>
@@ -533,6 +581,7 @@ class ThermalPrintingService {
         <div class="store-info">Tel: ${this.settings.storePhone}</div>
         `
         }
+        <div class="store-info">Receipt Type: Customer</div>
     </div>
 
     <!-- Order Information -->
@@ -550,51 +599,73 @@ class ThermalPrintingService {
         </div>
     </div>
 
+    ${
+      safeOrderData.custName || safeOrderData.custPhone
+        ? `
+    <!-- Customer Information -->
+    <div class="customer-info">
+        ${
+          safeOrderData.custName
+            ? `<div class="order-line">
+            <span>${hasArabic ? "العميل:" : "Customer:"}</span>
+            <span>${safeOrderData.custName}</span>
+        </div>`
+            : ""
+        }
+        ${
+          safeOrderData.custPhone
+            ? `<div class="order-line">
+            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
+            <span>${safeOrderData.custPhone}</span>
+        </div>`
+            : ""
+        }
+    </div>`
+        : ""
+    }
+
     <div class="separator">* * * * * * * * * * * * * * * * * * * *</div>
 
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th style="width: 40%;">${hasArabic ? "الصنف" : "Item"}</th>
-                <th style="width: 15%;">${hasArabic ? "الكمية" : "Qty"}</th>
-                <th style="width: 20%;">${hasArabic ? "السعر" : "Price"}</th>
-                <th style="width: 25%;">${hasArabic ? "المجموع" : "Total"}</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${safeOrderData.orderItems
-              .map(
-                (item) => `
-            <tr>
-                <td class="item-name">
-                    <div class="${hasArabic ? "arabic-text" : ""}">${
-                  item.nameAr || item.name
-                }</div>
-                    ${
-                      item.nameAr && item.name !== item.nameAr
-                        ? `<div class="item-name-secondary english-text">${item.name}</div>`
-                        : ""
-                    }
-                </td>
-                <td class="number-cell">${this.formatQuantity(
-                  item.quantity,
-                  hasArabic
-                )}</td>
-                <td class="number-cell">${this.formatPrice(
-                  item.price,
-                  hasArabic
-                )}</td>
-                <td class="number-cell">${this.formatPrice(
-                  item.quantity * item.price,
-                  hasArabic
-                )}</td>
-            </tr>
-            `
-              )
-              .join("")}
-        </tbody>
-    </table>
+    <!-- Items Section -->
+    <div class="items-section">
+        <div class="items-header">
+            <div class="col-item">${hasArabic ? "الصنف" : "Item"}</div>
+            <div class="col-qty">${hasArabic ? "الكمية" : "Qty"}</div>
+            <div class="col-price">${hasArabic ? "السعر" : "Price"}</div>
+            <div class="col-total">${hasArabic ? "المجموع" : "Total"}</div>
+        </div>
+        
+        ${safeOrderData.orderItems
+          .map(
+            (item) => `
+        <div class="items-row">
+            <div class="col-item">
+                <div class="item-name ${hasArabic ? "arabic-text" : ""}">${
+              item.nameAr || item.name
+            }</div>
+                ${
+                  item.nameAr && item.name !== item.nameAr
+                    ? `<div class="item-name-secondary english-text">${item.name}</div>`
+                    : ""
+                }
+            </div>
+            <div class="col-qty">${this.formatQuantity(
+              item.quantity,
+              hasArabic
+            )}</div>
+            <div class="col-price">${this.formatPrice(
+              item.price,
+              hasArabic
+            )}</div>
+            <div class="col-total">${this.formatPrice(
+              item.quantity * item.price,
+              hasArabic
+            )}</div>
+        </div>
+        `
+          )
+          .join("")}
+    </div>
 
     <!-- Totals Section -->
     <div class="totals">
@@ -628,6 +699,32 @@ class ThermalPrintingService {
         </div>
     </div>
 
+    ${
+      safeOrderData.paymentMethods && safeOrderData.paymentMethods.length > 0
+        ? `
+    <!-- Payment Information -->
+    <div class="payment-section">
+        <div style="font-weight: bold; margin-bottom: 1mm;">${
+          hasArabic ? "طريقة الدفع:" : "Payment Method:"
+        }</div>
+        ${safeOrderData.paymentMethods
+          .map(
+            (payment) => `
+        <div class="order-line">
+            <span>${
+              hasArabic
+                ? this.getPaymentMethodArabic(payment.method)
+                : this.getPaymentMethodEnglish(payment.method)
+            }:</span>
+            <span>${this.formatAmount(payment.amount, hasArabic)}</span>
+        </div>
+        `
+          )
+          .join("")}
+    </div>`
+        : ""
+    }
+
     <!-- Footer -->
     <div class="footer">
         ${
@@ -640,6 +737,206 @@ class ThermalPrintingService {
         <div>Thank you for your visit!</div>
         `
         }
+        <div style="margin-top: 2mm; font-size: 8px;">
+            ${hasArabic ? "فاتورة العميل" : "Customer Copy"}
+        </div>
+    </div>
+</body>
+</html>`;
+  }
+
+  /**
+   * Generate kitchen ticket HTML with simplified layout for kitchen staff
+   */
+  generateKitchenTicketHTML(orderData) {
+    const hasArabic = this.detectArabicContent(orderData);
+    const safeOrderData = this.sanitizeOrderData(orderData);
+
+    return `<!DOCTYPE html>
+<html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Ticket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: ${
+              hasArabic
+                ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
+                : "Arial, sans-serif"
+            };
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #fff;
+            width: ${this.settings.paperWidth}mm;
+            padding: 1mm;
+            direction: ${hasArabic ? "rtl" : "ltr"};
+            max-width: ${this.settings.paperWidth}mm;
+            overflow: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2mm;
+            margin-bottom: 3mm;
+            background: #f0f0f0;
+        }
+        
+        .kitchen-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 1mm;
+        }
+        
+        .order-info {
+            margin: 2mm 0;
+            font-size: 11px;
+        }
+        
+        .order-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1mm;
+            font-weight: bold;
+        }
+        
+        .items-section {
+            margin: 3mm 0;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2mm 0;
+            border-bottom: 1px dashed #ccc;
+            font-size: 11px;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 1mm;
+        }
+        
+        .item-name-secondary {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .item-quantity {
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            background: #fff;
+            border: 2px solid #000;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5mm;
+        }
+        
+        .datetime {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            margin: 2mm 0;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+        }
+        
+        .arabic-text {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .english-text {
+            direction: ltr;
+            text-align: left;
+        }
+        
+        @media print {
+            body { 
+                width: ${this.settings.paperWidth}mm; 
+                margin: 0;
+                padding: 1mm;
+                max-width: ${this.settings.paperWidth}mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Kitchen Header -->
+    <div class="header">
+        <div class="kitchen-title">${
+          hasArabic ? "تذكرة المطبخ" : "KITCHEN TICKET"
+        }</div>
+        <div style="font-size: 10px;">${this.settings.storeName}</div>
+    </div>
+
+    <!-- Order Information -->
+    <div class="order-info">
+        <div class="order-line">
+            <span>Order #:</span>
+            <span>${safeOrderData.orderNumber}</span>
+        </div>
+        <div class="order-line">
+            <span>Time:</span>
+            <span>${new Date().toLocaleTimeString()}</span>
+        </div>
+        ${
+          safeOrderData.custName
+            ? `<div class="order-line">
+            <span>Customer:</span>
+            <span>${safeOrderData.custName}</span>
+        </div>`
+            : ""
+        }
+    </div>
+
+    <!-- Items for Kitchen -->
+    <div class="items-section">
+        ${safeOrderData.orderItems
+          .map(
+            (item) => `
+        <div class="item-row">
+            <div class="item-details">
+                <div class="item-name ${hasArabic ? "arabic-text" : ""}">${
+              item.nameAr || item.name
+            }</div>
+                ${
+                  item.nameAr && item.name !== item.nameAr
+                    ? `<div class="item-name-secondary english-text">${item.name}</div>`
+                    : ""
+                }
+            </div>
+            <div class="item-quantity">${item.quantity}</div>
+        </div>
+        `
+          )
+          .join("")}
+    </div>
+
+    <!-- Footer -->
+    <div class="datetime">
+        ${hasArabic ? "نسخة المطبخ" : "Kitchen Copy"} - ${this.formatDateTime(
+      hasArabic
+    )}
     </div>
 </body>
 </html>`;
@@ -1084,6 +1381,7 @@ class ThermalPrintingService {
         }
       }
 
+      this.log("🖨️ Printing CUSTOMER receipt to:", targetPrinter);
       return await this.printReceipt(orderData, targetPrinter, {
         type: "customer",
       });
@@ -1112,6 +1410,7 @@ class ThermalPrintingService {
         }
       }
 
+      this.log("🖨️ Printing KITCHEN ticket to:", targetPrinter);
       return await this.printReceipt(orderData, targetPrinter, {
         type: "kitchen",
       });
@@ -1363,7 +1662,7 @@ class ThermalPrintingService {
    * Generate customer receipt content for preview
    */
   generateCustomerReceipt(orderData) {
-    return this.generateReceiptHTML(orderData, { type: "customer" });
+    return this.generateCustomerReceiptHTML(orderData);
   }
 
   /**
