@@ -801,27 +801,75 @@ class ThermalPrintingService {
    * Sanitize order data to prevent display issues like "ee.ee"
    */
   sanitizeOrderData(orderData) {
+    // Handle order items from different sources
+    let items = [];
+    if (orderData.orderItems && Array.isArray(orderData.orderItems)) {
+      items = orderData.orderItems.map((item) => {
+        // Handle different item data structures
+        let itemData = item;
+
+        // If item has meal data embedded
+        if (item.meal) {
+          itemData = {
+            ...item,
+            name: item.meal.name || item.name || "Item",
+            nameAr: item.meal.nameAr || item.nameAr || "",
+            price: Number(item.price) || Number(item.meal.price) || 0,
+          };
+        }
+
+        // If we have orderItemsData, try to match
+        if (orderData.orderItemsData && orderData.orderItemsData.length > 0) {
+          const mealData = orderData.orderItemsData.find(
+            (meal) => meal._id === item.mealId || meal._id === item.id
+          );
+          if (mealData) {
+            itemData = {
+              ...item,
+              name: mealData.name || item.name || "Item",
+              nameAr: mealData.nameAr || item.nameAr || "",
+              price: Number(item.price) || Number(mealData.price) || 0,
+            };
+          }
+        }
+
+        return {
+          name: String(itemData.name || "Item"),
+          nameAr: String(itemData.nameAr || ""),
+          quantity: Number(itemData.quantity) || 1,
+          price: Number(itemData.price) || 0,
+        };
+      });
+    }
+
+    // Calculate subtotal from items
+    const calculatedSubtotal = items.reduce(
+      (sum, item) => sum + item.quantity * item.price,
+      0
+    );
+
     const safe = {
-      orderNumber: String(orderData.orderNumber || "001"),
+      orderNumber: String(
+        orderData.orderNumber ||
+          orderData.orderCode ||
+          orderData._id?.slice(-8) ||
+          "001"
+      ),
       cashier: String(orderData.cashier || "N/A"),
-      orderItems: (orderData.orderItems || []).map((item) => ({
-        name: String(item.name || "Item"),
-        nameAr: String(item.nameAr || ""),
-        quantity: Number(item.quantity) || 1,
-        price: Number(item.price) || 0,
-      })),
-      subtotal: Number(orderData.subtotal) || 0,
-      tax: Number(orderData.tax) || 0,
-      discount: Number(orderData.discount) || 0,
-      total: Number(orderData.total) || 0,
+      orderItems: items,
+      subtotal: Number(orderData.subtotal) || calculatedSubtotal,
+      tax: Number(orderData.tax) || Number(orderData.taxAmount) || 0,
+      discount:
+        Number(orderData.discount) || Number(orderData.discountAmount) || 0,
+      total: Number(orderData.total) || Number(orderData.finalTotal) || 0,
+      paymentMethods: orderData.paymentMethods || [],
+      custName: String(orderData.custName || ""),
+      custPhone: String(orderData.custPhone || orderData.custtPhone || ""),
+      custAddress: String(orderData.custAddress || ""),
     };
 
-    // Ensure total calculation is correct
+    // Ensure total calculation is correct if missing
     if (safe.total === 0 && safe.orderItems.length > 0) {
-      safe.subtotal = safe.orderItems.reduce(
-        (sum, item) => sum + item.quantity * item.price,
-        0
-      );
       safe.total = safe.subtotal + safe.tax - safe.discount;
     }
 
@@ -888,6 +936,36 @@ class ThermalPrintingService {
     } else {
       return `${this.settings.currency} ${formatted}`;
     }
+  }
+
+  /**
+   * Get payment method name in Arabic
+   */
+  getPaymentMethodArabic(method) {
+    const methods = {
+      cash: "نقداً",
+      visa: "فيزا",
+      mastercard: "ماستركارد",
+      credit: "بطاقة ائتمان",
+      debit: "بطاقة خصم",
+      bank: "تحويل بنكي",
+    };
+    return methods[method] || method;
+  }
+
+  /**
+   * Get payment method name in English
+   */
+  getPaymentMethodEnglish(method) {
+    const methods = {
+      cash: "Cash",
+      visa: "Visa",
+      mastercard: "Mastercard",
+      credit: "Credit Card",
+      debit: "Debit Card",
+      bank: "Bank Transfer",
+    };
+    return methods[method] || method.toUpperCase();
   }
 
   /**
@@ -965,7 +1043,24 @@ class ThermalPrintingService {
       this.log("❌ Kitchen ticket failed:", results[1].reason);
     }
 
-    return customerSuccess && kitchenSuccess;
+    // Return array format expected by cashier page
+    return [
+      { success: customerSuccess, type: "customer" },
+      { success: kitchenSuccess, type: "kitchen" },
+    ];
+  }
+
+  /**
+   * Get printer settings (for cashier page compatibility)
+   */
+  getPrinterSettings() {
+    try {
+      const stored = localStorage.getItem("printer_settings");
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      this.log("⚠️ Failed to load printer settings:", error);
+      return [];
+    }
   }
 
   /**
