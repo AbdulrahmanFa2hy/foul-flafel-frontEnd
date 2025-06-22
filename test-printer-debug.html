@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Printer Debug & Test Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+
+      .printer-list {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+      .printer-item {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .printer-item:last-child {
+        border-bottom: none;
+      }
+
+      .log {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+
+      select,
+      input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin: 5px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🖨️ Printer Debug & Test Page</h1>
+    <p>
+      This page helps diagnose printing issues and ensures direct printing
+      without save dialogs.
+    </p>
+
+    <div class="grid">
+      <!-- QZ Tray Connection -->
+      <div class="container">
+        <h2>🔌 QZ Tray Connection</h2>
+        <div id="qz-status" class="status info">Checking QZ Tray...</div>
+        <button onclick="connectQZ()">Connect to QZ Tray</button>
+        <button onclick="disconnectQZ()">Disconnect</button>
+      </div>
+
+      <!-- Printer Discovery -->
+      <div class="container">
+        <h2>🔍 Printer Discovery</h2>
+        <button onclick="discoverPrinters()">Discover Printers</button>
+        <div id="printer-list" class="printer-list">
+          <em>Click "Discover Printers" to find available printers</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printer Testing -->
+    <div class="container">
+      <h2>🧪 Printer Testing</h2>
+      <div style="margin-bottom: 10px">
+        <label>Select Printer:</label>
+        <select id="selected-printer">
+          <option value="">Select a printer...</option>
+        </select>
+        <button onclick="validateSelectedPrinter()">Validate Printer</button>
+      </div>
+
+      <div style="margin-bottom: 10px">
+        <button onclick="testBasicPrint()">Test Basic Print</button>
+        <button onclick="testArabicPrint()">Test Arabic Print</button>
+        <button onclick="testReceiptPrint()">Test Receipt Print</button>
+      </div>
+
+      <div id="test-results" class="status info" style="display: none"></div>
+    </div>
+
+    <!-- Print Method Testing -->
+    <div class="container">
+      <h2>⚙️ Print Method Testing</h2>
+      <div style="margin-bottom: 10px">
+        <label>Print Method:</label>
+        <select id="print-method">
+          <option value="html">HTML (Recommended)</option>
+          <option value="canvas">Canvas (Fallback)</option>
+          <option value="raw">Raw ESC/POS</option>
+        </select>
+      </div>
+
+      <button onclick="testPrintMethod()">Test Selected Method</button>
+      <div id="method-results" class="status info" style="display: none"></div>
+    </div>
+
+    <!-- Configuration Check -->
+    <div class="container">
+      <h2>⚙️ Configuration Check</h2>
+      <button onclick="checkPrinterSettings()">Check Printer Settings</button>
+      <button onclick="checkReceiptSettings()">Check Receipt Settings</button>
+      <div id="config-results" class="log" style="display: none"></div>
+    </div>
+
+    <!-- Debug Log -->
+    <div class="container">
+      <h2>📝 Debug Log</h2>
+      <button onclick="clearLog()">Clear Log</button>
+      <div id="debug-log" class="log">Debug messages will appear here...\n</div>
+    </div>
+
+    <script>
+      let qz = null;
+      let isConnected = false;
+      let availablePrinters = [];
+
+      // Logging function
+      function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const logElement = document.getElementById("debug-log");
+        const prefix =
+          type === "error"
+            ? "❌"
+            : type === "success"
+            ? "✅"
+            : type === "warning"
+            ? "⚠️"
+            : "ℹ️";
+        logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(`[PrinterDebug] ${message}`);
+      }
+
+      function clearLog() {
+        document.getElementById("debug-log").textContent =
+          "Debug messages will appear here...\n";
+      }
+
+      function showStatus(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.className = `status ${type}`;
+        element.style.display = "block";
+      }
+
+      // QZ Tray Connection
+      async function connectQZ() {
+        try {
+          log("Attempting to connect to QZ Tray...");
+
+          if (typeof qz === "undefined") {
+            throw new Error("QZ Tray library not loaded");
+          }
+
+          if (!qz.websocket.isActive()) {
+            await qz.websocket.connect();
+          }
+
+          isConnected = true;
+          showStatus(
+            "qz-status",
+            "✅ Connected to QZ Tray successfully",
+            "success"
+          );
+          log("QZ Tray connected successfully", "success");
+
+          // Auto-discover printers after connection
+          setTimeout(discoverPrinters, 500);
+        } catch (error) {
+          isConnected = false;
+          showStatus(
+            "qz-status",
+            `❌ Failed to connect: ${error.message}`,
+            "error"
+          );
+          log(`QZ Tray connection failed: ${error.message}`, "error");
+        }
+      }
+
+      async function disconnectQZ() {
+        try {
+          if (qz && qz.websocket.isActive()) {
+            await qz.websocket.disconnect();
+          }
+          isConnected = false;
+          showStatus("qz-status", "📴 Disconnected from QZ Tray", "info");
+          log("QZ Tray disconnected", "info");
+        } catch (error) {
+          log(`Disconnect failed: ${error.message}`, "error");
+        }
+      }
+
+      // Printer Discovery
+      async function discoverPrinters() {
+        try {
+          if (!isConnected) {
+            await connectQZ();
+          }
+
+          log("Discovering available printers...");
+          availablePrinters = await qz.printers.find();
+
+          const printerListElement = document.getElementById("printer-list");
+          const printerSelect = document.getElementById("selected-printer");
+
+          if (availablePrinters.length === 0) {
+            printerListElement.innerHTML = "<em>No printers found</em>";
+            log("No printers found", "warning");
+            return;
+          }
+
+          // Update printer list display
+          printerListElement.innerHTML = availablePrinters
+            .map(
+              (printer) => `
+                    <div class="printer-item">
+                        <span><strong>${printer}</strong></span>
+                        <button onclick="testPrinter('${printer}')">Test</button>
+                    </div>
+                `
+            )
+            .join("");
+
+          // Update printer select dropdown
+          printerSelect.innerHTML =
+            '<option value="">Select a printer...</option>' +
+            availablePrinters
+              .map(
+                (printer) => `<option value="${printer}">${printer}</option>`
+              )
+              .join("");
+
+          log(
+            `Found ${
+              availablePrinters.length
+            } printers: ${availablePrinters.join(", ")}`,
+            "success"
+          );
+        } catch (error) {
+          log(`Printer discovery failed: ${error.message}`, "error");
+          showStatus(
+            "printer-list",
+            `❌ Discovery failed: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      // Printer Validation
+      async function validateSelectedPrinter() {
+        const selectedPrinter =
+          document.getElementById("selected-printer").value;
+        if (!selectedPrinter) {
+          showStatus(
+            "test-results",
+            "Please select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log(`Validating printer: ${selectedPrinter}`);
+
+          const exists = availablePrinters.includes(selectedPrinter);
+          if (exists) {
+            showStatus(
+              "test-results",
+              `✅ Printer "${selectedPrinter}" is available and ready`,
+              "success"
+            );
+            log(`Printer validation successful: ${selectedPrinter}`, "success");
+          } else {
+            showStatus(
+              "test-results",
+              `❌ Printer "${selectedPrinter}" not found`,
+              "error"
+            );
+            log(
+              `Printer validation failed: ${selectedPrinter} not in available list`,
+              "error"
+            );
+          }
+        } catch (error) {
+          showStatus(
+            "test-results",
+            `❌ Validation failed: ${error.message}`,
+            "error"
+          );
+          log(`Printer validation error: ${error.message}`, "error");
+        }
+      }
+
+      // Test Functions
+      async function testBasicPrint() {
+        const selectedPrinter =
+          document.getElementById("selected-printer").value;
+        if (!selectedPrinter) {
+          showStatus(
+            "test-results",
+            "Please select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log(`Testing basic print to: ${selectedPrinter}`);
+          showStatus("test-results", "Printing basic test...", "info");
+
+          const config = qz.configs.create(selectedPrinter);
+          const data = [
+            {
+              type: "raw",
+              format: "plain",
+              data:
+                "BASIC PRINT TEST\n\nThis is a test from the debug page.\n\nTime: " +
+                new Date().toLocaleString() +
+                "\n\n\n\n",
+            },
+          ];
+
+          await qz.print(config, data);
+          showStatus(
+            "test-results",
+            "✅ Basic print test completed successfully",
+            "success"
+          );
+          log("Basic print test completed successfully", "success");
+        } catch (error) {
+          showStatus(
+            "test-results",
+            `❌ Basic print failed: ${error.message}`,
+            "error"
+          );
+          log(`Basic print test failed: ${error.message}`, "error");
+        }
+      }
+
+      async function testArabicPrint() {
+        const selectedPrinter =
+          document.getElementById("selected-printer").value;
+        if (!selectedPrinter) {
+          showStatus(
+            "test-results",
+            "Please select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log(`Testing Arabic print to: ${selectedPrinter}`);
+          showStatus("test-results", "Printing Arabic test...", "info");
+
+          const htmlContent = `
+                <!DOCTYPE html>
+                <html dir="rtl" lang="ar">
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { 
+                            font-family: 'Tahoma', 'Arial Unicode MS', sans-serif; 
+                            font-size: 12px; 
+                            direction: rtl; 
+                            text-align: center;
+                            width: 80mm;
+                            margin: 0;
+                            padding: 5mm;
+                        }
+                        .header { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+                        .item { margin: 5px 0; text-align: right; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">اختبار الطباعة العربية</div>
+                    <div class="header">Arabic Print Test</div>
+                    <hr>
+                    <div class="item">فول بالطحينة - ١٥.٥٠ ريال</div>
+                    <div class="item">ساندويتش فلافل - ١٢.٠٠ ريال</div>
+                    <div class="item">قهوة عربية - ٨.٥٠ ريال</div>
+                    <hr>
+                    <div>المجموع: ٣٦.٠٠ ريال</div>
+                    <div>Total: 36.00 SAR</div>
+                    <div style="margin-top: 10px;">وقت الاختبار: ${new Date().toLocaleString(
+                      "ar-SA"
+                    )}</div>
+                </body>
+                </html>`;
+
+          const config = qz.configs.create(selectedPrinter, {
+            colorType: "blackwhite",
+            units: "mm",
+            size: { width: 80, height: 150 },
+            margins: { top: 2, right: 2, bottom: 2, left: 2 },
+          });
+
+          const data = [
+            {
+              type: "pixel",
+              format: "html",
+              flavor: "plain",
+              data: htmlContent,
+            },
+          ];
+
+          await qz.print(config, data);
+          showStatus(
+            "test-results",
+            "✅ Arabic print test completed successfully",
+            "success"
+          );
+          log("Arabic print test completed successfully", "success");
+        } catch (error) {
+          showStatus(
+            "test-results",
+            `❌ Arabic print failed: ${error.message}`,
+            "error"
+          );
+          log(`Arabic print test failed: ${error.message}`, "error");
+        }
+      }
+
+      async function testReceiptPrint() {
+        const selectedPrinter =
+          document.getElementById("selected-printer").value;
+        if (!selectedPrinter) {
+          showStatus(
+            "test-results",
+            "Please select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log(`Testing receipt print to: ${selectedPrinter}`);
+          showStatus("test-results", "Printing receipt test...", "info");
+
+          // Use the same format as the actual printing service
+          const receiptData = {
+            orderNumber: "TEST-001",
+            cashier: "Debug Test",
+            orderItems: [
+              {
+                name: "Test Item 1",
+                nameAr: "عنصر تجريبي ١",
+                quantity: 2,
+                price: 15.5,
+              },
+              {
+                name: "Test Item 2",
+                nameAr: "عنصر تجريبي ٢",
+                quantity: 1,
+                price: 25.0,
+              },
+            ],
+            subtotal: 56.0,
+            tax: 8.4,
+            discount: 0,
+            total: 64.4,
+            custName: "Test Customer",
+            custPhone: "0501234567",
+          };
+
+          // Import the printing service if available
+          if (typeof printingService !== "undefined") {
+            await printingService.printReceipt(receiptData, selectedPrinter);
+            showStatus(
+              "test-results",
+              "✅ Receipt print test completed successfully",
+              "success"
+            );
+            log("Receipt print test completed successfully", "success");
+          } else {
+            throw new Error(
+              "Printing service not available in this test environment"
+            );
+          }
+        } catch (error) {
+          showStatus(
+            "test-results",
+            `❌ Receipt print failed: ${error.message}`,
+            "error"
+          );
+          log(`Receipt print test failed: ${error.message}`, "error");
+        }
+      }
+
+      async function testPrintMethod() {
+        const selectedPrinter =
+          document.getElementById("selected-printer").value;
+        const printMethod = document.getElementById("print-method").value;
+
+        if (!selectedPrinter) {
+          showStatus(
+            "method-results",
+            "Please select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log(`Testing ${printMethod} print method to: ${selectedPrinter}`);
+          showStatus(
+            "method-results",
+            `Testing ${printMethod} method...`,
+            "info"
+          );
+
+          let config, data;
+
+          switch (printMethod) {
+            case "html":
+              config = qz.configs.create(selectedPrinter, {
+                colorType: "blackwhite",
+                units: "mm",
+                size: { width: 80, height: 100 },
+              });
+              data = [
+                {
+                  type: "pixel",
+                  format: "html",
+                  flavor: "plain",
+                  data: `<html><body style="font-family: Arial; text-align: center; width: 80mm; padding: 5mm;">
+                                <h3>HTML Print Test</h3>
+                                <p>Method: ${printMethod}</p>
+                                <p>Time: ${new Date().toLocaleString()}</p>
+                                <p>Arabic: مرحبا بكم</p>
+                            </body></html>`,
+                },
+              ];
+              break;
+
+            case "canvas":
+              // Canvas method would require more complex implementation
+              throw new Error(
+                "Canvas method test not implemented in this debug page"
+              );
+
+            case "raw":
+              config = qz.configs.create(selectedPrinter);
+              data = [
+                {
+                  type: "raw",
+                  format: "command",
+                  data: `RAW PRINT METHOD TEST\n\nMethod: ${printMethod}\nTime: ${new Date().toLocaleString()}\n\n\n\n`,
+                },
+              ];
+              break;
+
+            default:
+              throw new Error(`Unknown print method: ${printMethod}`);
+          }
+
+          await qz.print(config, data);
+          showStatus(
+            "method-results",
+            `✅ ${printMethod} method test completed successfully`,
+            "success"
+          );
+          log(`${printMethod} method test completed successfully`, "success");
+        } catch (error) {
+          showStatus(
+            "method-results",
+            `❌ ${printMethod} method failed: ${error.message}`,
+            "error"
+          );
+          log(`${printMethod} method test failed: ${error.message}`, "error");
+        }
+      }
+
+      // Configuration Check
+      function checkPrinterSettings() {
+        try {
+          const settings = localStorage.getItem("printer_settings");
+          const configResults = document.getElementById("config-results");
+
+          if (settings) {
+            const parsed = JSON.parse(settings);
+            configResults.textContent =
+              "Printer Settings:\n" + JSON.stringify(parsed, null, 2);
+            log("Printer settings loaded successfully", "success");
+          } else {
+            configResults.textContent =
+              "No printer settings found in localStorage";
+            log("No printer settings found", "warning");
+          }
+
+          configResults.style.display = "block";
+        } catch (error) {
+          log(`Failed to load printer settings: ${error.message}`, "error");
+        }
+      }
+
+      function checkReceiptSettings() {
+        try {
+          const settings = localStorage.getItem("receiptSettings");
+          const configResults = document.getElementById("config-results");
+
+          if (settings) {
+            const parsed = JSON.parse(settings);
+            configResults.textContent =
+              "Receipt Settings:\n" + JSON.stringify(parsed, null, 2);
+            log("Receipt settings loaded successfully", "success");
+          } else {
+            configResults.textContent =
+              "No receipt settings found in localStorage";
+            log("No receipt settings found", "warning");
+          }
+
+          configResults.style.display = "block";
+        } catch (error) {
+          log(`Failed to load receipt settings: ${error.message}`, "error");
+        }
+      }
+
+      // Initialize QZ Tray reference
+      if (typeof qz !== "undefined") {
+        window.qz = qz;
+        log("QZ Tray library loaded successfully", "success");
+      } else {
+        log("QZ Tray library not found", "error");
+      }
+
+      // Auto-connect on page load
+      window.addEventListener("load", () => {
+        setTimeout(connectQZ, 1000);
+      });
+    </script>
+  </body>
+</html>

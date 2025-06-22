@@ -48,7 +48,7 @@ class ThermalPrintingService {
       characterWidth: 42,
       enableArabicSupport: true,
       printMethod: "auto", // 'auto', 'html', 'canvas', 'raw'
-      debugMode: false,
+      debugMode: true, // Enable debug mode to troubleshoot printer issues
     };
 
     this.log("ThermalPrintingService initialized");
@@ -189,10 +189,16 @@ class ThermalPrintingService {
   async printWithHTML(orderData, printerName, options = {}) {
     try {
       this.log("🌐 Printing with HTML method...");
+      this.log("🖨️ Target printer:", printerName);
+
+      // Validate printer exists
+      if (!printerName) {
+        throw new Error("No printer specified for HTML printing");
+      }
 
       const htmlContent = this.generateReceiptHTML(orderData, options);
 
-      // Create QZ config for HTML printing
+      // Create QZ config for HTML printing - ensure direct printing to printer
       const config = this.qzInstance.configs.create(printerName, {
         colorType: "blackwhite",
         units: "mm",
@@ -204,6 +210,9 @@ class ThermalPrintingService {
         orientation: "portrait",
         density: 203, // DPI for thermal printers
         jobName: `Receipt-${orderData.orderNumber || "UNKNOWN"}`,
+        // Ensure direct printing to printer, not file
+        copies: 1,
+        duplex: false,
       });
 
       // Create HTML print data
@@ -216,11 +225,13 @@ class ThermalPrintingService {
         },
       ];
 
+      this.log("📤 Sending print job to printer:", printerName);
       await this.qzInstance.print(config, printData);
       this.log("✅ HTML printing completed successfully");
       return true;
     } catch (error) {
       this.log("❌ HTML printing failed:", error);
+      this.log("❌ Error details:", error);
       throw error;
     }
   }
@@ -773,17 +784,67 @@ class ThermalPrintingService {
   }
 
   /**
-   * Select target printer
+   * Select printer with better error handling and actual system printer names
    */
   async selectPrinter(printerName) {
-    if (printerName) return printerName;
+    try {
+      // If specific printer name provided, validate it exists
+      if (printerName) {
+        const availablePrinters = await this.getPrinters();
+        const printerExists = availablePrinters.some(
+          (p) =>
+            p === printerName ||
+            p.toLowerCase().includes(printerName.toLowerCase()) ||
+            printerName.toLowerCase().includes(p.toLowerCase())
+        );
 
-    const printers = await this.getPrinters();
-    if (printers.length === 0) {
-      throw new Error("No printers found");
+        if (printerExists) {
+          // Find exact match or best match
+          const exactMatch = availablePrinters.find((p) => p === printerName);
+          const partialMatch = availablePrinters.find(
+            (p) =>
+              p.toLowerCase().includes(printerName.toLowerCase()) ||
+              printerName.toLowerCase().includes(p.toLowerCase())
+          );
+
+          const selectedPrinter = exactMatch || partialMatch;
+          this.log("🎯 Selected printer:", selectedPrinter);
+          return selectedPrinter;
+        }
+
+        this.log("⚠️ Specified printer not found:", printerName);
+      }
+
+      // Get available printers and select the best one
+      const availablePrinters = await this.getPrinters();
+      if (availablePrinters.length === 0) {
+        throw new Error(
+          "No printers found. Please ensure printers are installed and QZ Tray is running."
+        );
+      }
+
+      // Try to find a thermal printer first
+      let selectedPrinter = availablePrinters.find(
+        (p) =>
+          p.toLowerCase().includes("thermal") ||
+          p.toLowerCase().includes("receipt") ||
+          p.toLowerCase().includes("pos") ||
+          p.toLowerCase().includes("rp-") ||
+          p.toLowerCase().includes("xprinter") ||
+          p.toLowerCase().includes("epson")
+      );
+
+      // If no thermal printer found, use the first available printer
+      if (!selectedPrinter) {
+        selectedPrinter = availablePrinters[0];
+      }
+
+      this.log("🎯 Auto-selected printer:", selectedPrinter);
+      return selectedPrinter;
+    } catch (error) {
+      this.log("❌ Printer selection failed:", error);
+      throw new Error(`Printer selection failed: ${error.message}`);
     }
-
-    return printers[0]; // Use first available printer
   }
 
   /**
@@ -1005,49 +1066,128 @@ class ThermalPrintingService {
   }
 
   /**
-   * Print customer receipt (interface compatibility)
+   * Print customer receipt with proper printer selection
    */
   async printCustomerReceipt(orderData, printerName = null) {
-    return await this.printReceipt(orderData, printerName, {
-      type: "customer",
-    });
+    try {
+      let targetPrinter = printerName;
+
+      if (!targetPrinter) {
+        // Get customer printer from settings
+        const enabledPrinters = await this.getEnabledPrinters();
+        const customerPrinter = enabledPrinters.find(
+          (p) => p.type === "customer" && p.enabled
+        );
+
+        if (customerPrinter && customerPrinter.systemName) {
+          targetPrinter = customerPrinter.systemName;
+        }
+      }
+
+      return await this.printReceipt(orderData, targetPrinter, {
+        type: "customer",
+      });
+    } catch (error) {
+      this.log("❌ Customer receipt printing failed:", error);
+      throw error;
+    }
   }
 
   /**
-   * Print kitchen ticket (interface compatibility)
+   * Print kitchen ticket with proper printer selection
    */
   async printKitchenTicket(orderData, printerName = null) {
-    return await this.printReceipt(orderData, printerName, { type: "kitchen" });
+    try {
+      let targetPrinter = printerName;
+
+      if (!targetPrinter) {
+        // Get kitchen printer from settings
+        const enabledPrinters = await this.getEnabledPrinters();
+        const kitchenPrinter = enabledPrinters.find(
+          (p) => p.type === "kitchen" && p.enabled
+        );
+
+        if (kitchenPrinter && kitchenPrinter.systemName) {
+          targetPrinter = kitchenPrinter.systemName;
+        }
+      }
+
+      return await this.printReceipt(orderData, targetPrinter, {
+        type: "kitchen",
+      });
+    } catch (error) {
+      this.log("❌ Kitchen ticket printing failed:", error);
+      throw error;
+    }
   }
 
   /**
-   * Print both receipts (interface compatibility)
+   * Print both receipts with proper printer selection
    */
   async printBothReceipts(
     orderData,
     customerPrinter = null,
     kitchenPrinter = null
   ) {
-    const results = await Promise.allSettled([
-      this.printCustomerReceipt(orderData, customerPrinter),
-      this.printKitchenTicket(orderData, kitchenPrinter),
-    ]);
+    try {
+      // Get enabled printers if not specified
+      const enabledPrinters = await this.getEnabledPrinters();
 
-    const customerSuccess = results[0].status === "fulfilled";
-    const kitchenSuccess = results[1].status === "fulfilled";
+      let customerPrinterName = customerPrinter;
+      let kitchenPrinterName = kitchenPrinter;
 
-    if (!customerSuccess) {
-      this.log("❌ Customer receipt failed:", results[0].reason);
+      if (!customerPrinterName) {
+        const customerConfig = enabledPrinters.find(
+          (p) => p.type === "customer" && p.enabled
+        );
+        customerPrinterName = customerConfig?.systemName;
+      }
+
+      if (!kitchenPrinterName) {
+        const kitchenConfig = enabledPrinters.find(
+          (p) => p.type === "kitchen" && p.enabled
+        );
+        kitchenPrinterName = kitchenConfig?.systemName;
+      }
+
+      this.log("🖨️ Printing to customer printer:", customerPrinterName);
+      this.log("🖨️ Printing to kitchen printer:", kitchenPrinterName);
+
+      const results = await Promise.allSettled([
+        this.printCustomerReceipt(orderData, customerPrinterName),
+        this.printKitchenTicket(orderData, kitchenPrinterName),
+      ]);
+
+      const customerSuccess = results[0].status === "fulfilled";
+      const kitchenSuccess = results[1].status === "fulfilled";
+
+      if (!customerSuccess) {
+        this.log("❌ Customer receipt failed:", results[0].reason);
+      }
+      if (!kitchenSuccess) {
+        this.log("❌ Kitchen ticket failed:", results[1].reason);
+      }
+
+      // Return array format expected by cashier page
+      return [
+        {
+          success: customerSuccess,
+          type: "customer",
+          error: customerSuccess ? null : results[0].reason?.message,
+        },
+        {
+          success: kitchenSuccess,
+          type: "kitchen",
+          error: kitchenSuccess ? null : results[1].reason?.message,
+        },
+      ];
+    } catch (error) {
+      this.log("❌ Print both receipts failed:", error);
+      return [
+        { success: false, type: "customer", error: error.message },
+        { success: false, type: "kitchen", error: error.message },
+      ];
     }
-    if (!kitchenSuccess) {
-      this.log("❌ Kitchen ticket failed:", results[1].reason);
-    }
-
-    // Return array format expected by cashier page
-    return [
-      { success: customerSuccess, type: "customer" },
-      { success: kitchenSuccess, type: "kitchen" },
-    ];
   }
 
   /**
@@ -1311,6 +1451,130 @@ class ThermalPrintingService {
 
     this.log("🧪 Testing Arabic receipt printing with comprehensive data...");
     return await this.printReceipt(testData, printerName);
+  }
+
+  /**
+   * Get enabled printers from settings with actual system printer names
+   */
+  async getEnabledPrinters() {
+    try {
+      const printerSettings = this.getPrinterSettings();
+      const availablePrinters = await this.getPrinters();
+
+      const enabledPrinters = printerSettings
+        .filter((p) => p.enabled)
+        .map((configPrinter) => {
+          // Try to match config printer with actual system printer
+          const systemPrinter = availablePrinters.find(
+            (sp) =>
+              sp === configPrinter.name ||
+              sp.toLowerCase().includes(configPrinter.name.toLowerCase()) ||
+              configPrinter.name.toLowerCase().includes(sp.toLowerCase()) ||
+              (configPrinter.model &&
+                sp.toLowerCase().includes(configPrinter.model.toLowerCase()))
+          );
+
+          return {
+            ...configPrinter,
+            systemName: systemPrinter || availablePrinters[0], // fallback to first available
+            available: !!systemPrinter,
+          };
+        });
+
+      this.log("🖨️ Enabled printers with system names:", enabledPrinters);
+      return enabledPrinters;
+    } catch (error) {
+      this.log("❌ Failed to get enabled printers:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Discover and list all available printers with details
+   */
+  async discoverPrinters() {
+    try {
+      this.log("🔍 Discovering available printers...");
+
+      if (!this.isConnected) {
+        await this.initialize();
+      }
+
+      const printers = await this.qzInstance.printers.find();
+      const printerDetails = [];
+
+      for (const printer of printers) {
+        const details = {
+          name: printer,
+          displayName: printer,
+          isDefault: false,
+          capabilities: await this.detectPrinterCapabilities(printer),
+          status: "unknown",
+        };
+
+        // Try to get more details if possible
+        try {
+          const status = await this.getPrinterStatus(printer);
+          details.status = status.online ? "online" : "offline";
+        } catch {
+          this.log("⚠️ Could not get status for printer:", printer);
+        }
+
+        printerDetails.push(details);
+      }
+
+      this.log("📋 Discovered printers:", printerDetails);
+      return printerDetails;
+    } catch (error) {
+      this.log("❌ Printer discovery failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate if a printer is available and ready
+   */
+  async validatePrinter(printerName) {
+    try {
+      if (!printerName) {
+        return { valid: false, error: "No printer name provided" };
+      }
+
+      const availablePrinters = await this.getPrinters();
+      const printerExists = availablePrinters.includes(printerName);
+
+      if (!printerExists) {
+        return {
+          valid: false,
+          error: `Printer '${printerName}' not found. Available printers: ${availablePrinters.join(
+            ", "
+          )}`,
+        };
+      }
+
+      // Try to get printer status
+      try {
+        const status = await this.getPrinterStatus(printerName);
+        return {
+          valid: true,
+          online: status.online,
+          ready: status.ready,
+          details: status,
+        };
+      } catch {
+        return {
+          valid: true,
+          online: true, // Assume online if we can't check
+          ready: true,
+          warning: "Could not verify printer status",
+        };
+      }
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Printer validation failed: ${error.message}`,
+      };
+    }
   }
 }
 
