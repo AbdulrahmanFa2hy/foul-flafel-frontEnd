@@ -317,18 +317,27 @@ class ThermalPrintingService {
 
   /**
    * Generate receipt HTML with proper Arabic support
+   * Fixed version addressing encoding and layout issues
    */
   generateReceiptHTML(orderData) {
     const hasArabic = this.detectArabicContent(orderData);
 
-    return `
-<!DOCTYPE html>
+    // Ensure we have valid data to prevent "ee.ee" issues
+    const safeOrderData = this.sanitizeOrderData(orderData);
+
+    return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&family=Roboto:wght@400;700&display=swap');
+        /* Embedded Arabic font to ensure proper rendering */
+        @font-face {
+            font-family: 'ArabicFont';
+            src: local('Tahoma'), local('Arial Unicode MS'), local('Segoe UI');
+            unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+        }
         
         * {
             margin: 0;
@@ -339,117 +348,121 @@ class ThermalPrintingService {
         body {
             font-family: ${
               hasArabic
-                ? "'Noto Sans Arabic', sans-serif"
-                : "'Roboto', sans-serif"
+                ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
+                : "Arial, sans-serif"
             };
-            font-size: 12px;
-            line-height: 1.3;
+            font-size: 11px;
+            line-height: 1.4;
             color: #000;
             background: #fff;
             width: ${this.settings.paperWidth}mm;
-            padding: 4mm;
+            padding: 3mm;
             direction: ${hasArabic ? "rtl" : "ltr"};
         }
         
         .header {
             text-align: center;
-            border-bottom: 2px dashed #000;
-            padding-bottom: 4mm;
-            margin-bottom: 4mm;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3mm;
+            margin-bottom: 3mm;
         }
         
         .store-name {
-            font-size: ${hasArabic ? "16px" : "14px"};
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 2mm;
-            ${hasArabic ? "direction: rtl; text-align: center;" : ""}
+            margin-bottom: 1mm;
+        }
+        
+        .store-name.arabic {
+            font-size: 16px;
+            direction: rtl;
+            text-align: center;
         }
         
         .store-info {
             font-size: 10px;
-            line-height: 1.4;
             margin-bottom: 1mm;
+        }
+        
+        .separator {
+            text-align: center;
+            margin: 2mm 0;
+            font-size: 8px;
         }
         
         .order-info {
-            margin: 4mm 0;
-            font-size: 11px;
+            margin: 3mm 0;
+            font-size: 10px;
+        }
+        
+        .order-line {
             display: flex;
             justify-content: space-between;
-            flex-wrap: wrap;
-        }
-        
-        .order-info div {
             margin-bottom: 1mm;
-            ${hasArabic ? "direction: rtl;" : ""}
         }
         
-        .items-section {
-            margin: 4mm 0;
-        }
-        
-        .items-header {
-            border-bottom: 1px solid #000;
-            padding-bottom: 2mm;
-            margin-bottom: 2mm;
-            display: flex;
-            font-weight: bold;
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 3mm 0;
             font-size: 10px;
-            ${hasArabic ? "direction: rtl;" : ""}
         }
         
-        .col-item { flex: 2; ${
-          hasArabic ? "text-align: right;" : "text-align: left;"
-        } }
-        .col-qty { flex: 1; text-align: center; }
-        .col-price { flex: 1; text-align: center; }
-        .col-total { flex: 1; text-align: center; }
+        .items-table th {
+            border-bottom: 1px solid #000;
+            padding: 2mm 1mm;
+            font-weight: bold;
+            text-align: center;
+        }
         
-        .item-row {
-            display: flex;
-            padding: 2mm 0;
+        .items-table td {
+            padding: 2mm 1mm;
             border-bottom: 1px dotted #ccc;
-            align-items: center;
-            ${hasArabic ? "direction: rtl;" : ""}
+            vertical-align: top;
         }
         
         .item-name {
+            text-align: ${hasArabic ? "right" : "left"};
             font-weight: bold;
-            ${hasArabic ? "direction: rtl; text-align: right;" : ""}
         }
         
-        .item-name-en {
+        .item-name-secondary {
             font-size: 9px;
             color: #666;
+            font-weight: normal;
             margin-top: 1mm;
-            ${hasArabic ? "direction: ltr; text-align: left;" : ""}
+        }
+        
+        .number-cell {
+            text-align: center;
+            font-family: Arial, monospace;
         }
         
         .totals {
-            border-top: 2px solid #000;
-            padding-top: 4mm;
-            margin-top: 4mm;
+            border-top: 1px solid #000;
+            margin-top: 3mm;
+            padding-top: 2mm;
         }
         
-        .total-row {
+        .total-line {
             display: flex;
             justify-content: space-between;
-            padding: 1mm 0;
-            ${hasArabic ? "direction: rtl;" : ""}
+            margin-bottom: 1mm;
+            font-size: 10px;
         }
         
-        .total-row.final {
+        .total-line.final {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
             border-top: 1px solid #000;
-            margin-top: 2mm;
             padding-top: 2mm;
+            margin-top: 2mm;
         }
         
         .footer {
             text-align: center;
-            margin-top: 6mm;
-            padding-top: 4mm;
+            margin-top: 4mm;
+            padding-top: 3mm;
             border-top: 1px dashed #000;
             font-size: 10px;
         }
@@ -461,25 +474,46 @@ class ThermalPrintingService {
             margin: 2mm 0;
         }
         
-        .rtl { direction: rtl; text-align: right; }
-        .ltr { direction: ltr; text-align: left; }
+        .arabic-text {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .english-text {
+            direction: ltr;
+            text-align: left;
+        }
+        
+        /* Ensure proper Arabic number display */
+        .arabic-number {
+            font-family: Arial, monospace;
+            direction: ltr;
+        }
         
         @media print {
-            body { width: ${this.settings.paperWidth}mm; }
-              }
-            </style>
-          </head>
-          <body>
+            body { 
+                width: ${this.settings.paperWidth}mm; 
+                margin: 0;
+                padding: 3mm;
+            }
+        }
+    </style>
+</head>
+<body>
     <!-- Header Section -->
     <div class="header">
         ${
           hasArabic
             ? `
-        <div class="store-name rtl">${this.settings.storeNameAr}</div>
-        <div class="store-name ltr">${this.settings.storeName}</div>
-        <div class="store-info rtl">${this.settings.storeAddressAr}</div>
-        <div class="store-info ltr">${this.settings.storeAddress}</div>
-        <div class="store-info">هاتف: ${this.settings.storePhoneAr}</div>
+        <div class="store-name arabic">${this.settings.storeNameAr}</div>
+        <div class="store-name english">${this.settings.storeName}</div>
+        <div class="store-info arabic-text">${
+          this.settings.storeAddressAr
+        }</div>
+        <div class="store-info english-text">${this.settings.storeAddress}</div>
+        <div class="store-info">هاتف: ${this.formatPhoneNumber(
+          this.settings.storePhoneAr
+        )}</div>
         <div class="store-info">Tel: ${this.settings.storePhone}</div>
         `
             : `
@@ -488,127 +522,98 @@ class ThermalPrintingService {
         <div class="store-info">Tel: ${this.settings.storePhone}</div>
         `
         }
-            </div>
+    </div>
 
     <!-- Order Information -->
     <div class="order-info">
-        <div class="ltr">Order: ${orderData.orderNumber || "N/A"}</div>
-        <div class="ltr">Cashier: ${orderData.cashier || "N/A"}</div>
-        ${
-          hasArabic
-            ? `
-        <div class="rtl">رقم الطلب: ${this.toArabicNumerals(
-          orderData.orderNumber || "N/A"
-        )}</div>
-        <div class="rtl">الكاشير: ${
-          orderData.cashierAr || orderData.cashier || "غير محدد"
-        }</div>
-        `
-            : ""
-        }
+        <div class="order-line">
+            <span>Order / رقم الطلب:</span>
+            <span>${safeOrderData.orderNumber}</span>
+        </div>
+        <div class="order-line">
+            <span>Cashier / الكاشير:</span>
+            <span>${safeOrderData.cashier}</span>
+        </div>
+        <div class="datetime">
+            ${this.formatDateTime(hasArabic)}
+        </div>
     </div>
 
-    <!-- Date/Time -->
-    <div class="datetime">
-        ${new Date().toLocaleString(hasArabic ? "ar-SA" : "en-US")}
-    </div>
+    <div class="separator">* * * * * * * * * * * * * * * * * * * *</div>
 
-    <!-- Items Section -->
-    <div class="items-section">
-        <div class="items-header">
-            <span class="col-item">${hasArabic ? "الصنف" : "Item"}</span>
-            <span class="col-qty">${hasArabic ? "الكمية" : "Qty"}</span>
-            <span class="col-price">${hasArabic ? "السعر" : "Price"}</span>
-            <span class="col-total">${hasArabic ? "المجموع" : "Total"}</span>
-        </div>
-        
-        ${(orderData.orderItems || [])
-          .map(
-            (item) => `
-        <div class="item-row">
-            <div class="col-item">
-                <div class="item-name ${hasArabic ? "rtl" : ""}">${
-              item.nameAr || item.name
-            }</div>
-                ${
-                  item.nameAr && item.name !== item.nameAr
-                    ? `<div class="item-name-en">${item.name}</div>`
-                    : ""
-                }
-            </div>
-            <div class="col-qty">${
-              hasArabic ? this.toArabicNumerals(item.quantity) : item.quantity
-            }</div>
-            <div class="col-price">${
-              hasArabic
-                ? this.toArabicNumerals(item.price.toFixed(2))
-                : item.price.toFixed(2)
-            }</div>
-            <div class="col-total">${
-              hasArabic
-                ? this.toArabicNumerals((item.quantity * item.price).toFixed(2))
-                : (item.quantity * item.price).toFixed(2)
-            }</div>
-        </div>
-        `
-          )
-          .join("")}
-    </div>
+    <!-- Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 40%;">${hasArabic ? "الصنف" : "Item"}</th>
+                <th style="width: 15%;">${hasArabic ? "الكمية" : "Qty"}</th>
+                <th style="width: 20%;">${hasArabic ? "السعر" : "Price"}</th>
+                <th style="width: 25%;">${hasArabic ? "المجموع" : "Total"}</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${safeOrderData.orderItems
+              .map(
+                (item) => `
+            <tr>
+                <td class="item-name">
+                    <div class="${hasArabic ? "arabic-text" : ""}">${
+                  item.nameAr || item.name
+                }</div>
+                    ${
+                      item.nameAr && item.name !== item.nameAr
+                        ? `<div class="item-name-secondary english-text">${item.name}</div>`
+                        : ""
+                    }
+                </td>
+                <td class="number-cell">${this.formatQuantity(
+                  item.quantity,
+                  hasArabic
+                )}</td>
+                <td class="number-cell">${this.formatPrice(
+                  item.price,
+                  hasArabic
+                )}</td>
+                <td class="number-cell">${this.formatPrice(
+                  item.quantity * item.price,
+                  hasArabic
+                )}</td>
+            </tr>
+            `
+              )
+              .join("")}
+        </tbody>
+    </table>
 
     <!-- Totals Section -->
     <div class="totals">
-        <div class="total-row">
+        <div class="total-line">
             <span>${hasArabic ? "المجموع الفرعي:" : "Subtotal:"}</span>
-            <span>${
-              hasArabic
-                ? this.toArabicNumerals((orderData.subtotal || 0).toFixed(2)) +
-                  " " +
-                  this.settings.currencyAr
-                : this.settings.currency +
-                  " " +
-                  (orderData.subtotal || 0).toFixed(2)
-            }</span>
+            <span>${this.formatAmount(safeOrderData.subtotal, hasArabic)}</span>
         </div>
         
-        <div class="total-row">
+        <div class="total-line">
             <span>${hasArabic ? "الضريبة:" : "Tax:"}</span>
-            <span>${
-              hasArabic
-                ? this.toArabicNumerals((orderData.tax || 0).toFixed(2)) +
-                  " " +
-                  this.settings.currencyAr
-                : this.settings.currency + " " + (orderData.tax || 0).toFixed(2)
-            }</span>
+            <span>${this.formatAmount(safeOrderData.tax, hasArabic)}</span>
         </div>
         
         ${
-          orderData.discount
+          safeOrderData.discount > 0
             ? `
-        <div class="total-row">
+        <div class="total-line">
             <span>${hasArabic ? "الخصم:" : "Discount:"}</span>
-            <span>-${
+            <span>-${this.formatAmount(
+              safeOrderData.discount,
               hasArabic
-                ? this.toArabicNumerals(orderData.discount.toFixed(2)) +
-                  " " +
-                  this.settings.currencyAr
-                : this.settings.currency + " " + orderData.discount.toFixed(2)
-            }</span>
+            )}</span>
         </div>
         `
             : ""
         }
         
-        <div class="total-row final">
+        <div class="total-line final">
             <span>${hasArabic ? "الإجمالي:" : "TOTAL:"}</span>
-            <span>${
-              hasArabic
-                ? this.toArabicNumerals((orderData.total || 0).toFixed(2)) +
-                  " " +
-                  this.settings.currencyAr
-                : this.settings.currency +
-                  " " +
-                  (orderData.total || 0).toFixed(2)
-            }</span>
+            <span>${this.formatAmount(safeOrderData.total, hasArabic)}</span>
         </div>
     </div>
 
@@ -617,14 +622,13 @@ class ThermalPrintingService {
         ${
           hasArabic
             ? `
-        <div class="rtl">شكراً لزيارتكم!</div>
-        <div class="ltr">Thank you for your visit!</div>
+        <div class="arabic-text">شكراً لزيارتكم!</div>
+        <div class="english-text">Thank you for your visit!</div>
         `
             : `
         <div>Thank you for your visit!</div>
         `
         }
-        <div class="datetime">${new Date().toLocaleString()}</div>
     </div>
 </body>
 </html>`;
@@ -791,6 +795,99 @@ class ThermalPrintingService {
       /[0-9]/g,
       (digit) => arabicNumerals[parseInt(digit)]
     );
+  }
+
+  /**
+   * Sanitize order data to prevent display issues like "ee.ee"
+   */
+  sanitizeOrderData(orderData) {
+    const safe = {
+      orderNumber: String(orderData.orderNumber || "001"),
+      cashier: String(orderData.cashier || "N/A"),
+      orderItems: (orderData.orderItems || []).map((item) => ({
+        name: String(item.name || "Item"),
+        nameAr: String(item.nameAr || ""),
+        quantity: Number(item.quantity) || 1,
+        price: Number(item.price) || 0,
+      })),
+      subtotal: Number(orderData.subtotal) || 0,
+      tax: Number(orderData.tax) || 0,
+      discount: Number(orderData.discount) || 0,
+      total: Number(orderData.total) || 0,
+    };
+
+    // Ensure total calculation is correct
+    if (safe.total === 0 && safe.orderItems.length > 0) {
+      safe.subtotal = safe.orderItems.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0
+      );
+      safe.total = safe.subtotal + safe.tax - safe.discount;
+    }
+
+    return safe;
+  }
+
+  /**
+   * Format phone number for display
+   */
+  formatPhoneNumber(phone) {
+    return String(phone || "").replace(/[^\d\u0660-\u0669]/g, "");
+  }
+
+  /**
+   * Format date and time for receipt
+   */
+  formatDateTime(isArabic) {
+    const now = new Date();
+    if (isArabic) {
+      return now.toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else {
+      return now.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+  }
+
+  /**
+   * Format quantity for display
+   */
+  formatQuantity(quantity, isArabic) {
+    const num = Number(quantity) || 1;
+    return isArabic ? this.toArabicNumerals(num.toString()) : num.toString();
+  }
+
+  /**
+   * Format price for display
+   */
+  formatPrice(price, isArabic) {
+    const num = Number(price) || 0;
+    const formatted = num.toFixed(2);
+    return isArabic ? this.toArabicNumerals(formatted) : formatted;
+  }
+
+  /**
+   * Format amount with currency for display
+   */
+  formatAmount(amount, isArabic) {
+    const num = Number(amount) || 0;
+    const formatted = num.toFixed(2);
+
+    if (isArabic) {
+      return `${this.toArabicNumerals(formatted)} ${this.settings.currencyAr}`;
+    } else {
+      return `${this.settings.currency} ${formatted}`;
+    }
   }
 
   /**
@@ -1082,38 +1179,39 @@ class ThermalPrintingService {
    */
   async printArabicTest(printerName = null) {
     const testData = {
-      orderNumber: "AR-001",
-      cashier: "Ahmed Ali",
-      cashierAr: "أحمد علي",
+      orderNumber: "12345",
+      cashier: "أحمد محمد",
+      cashierAr: "أحمد محمد",
       orderItems: [
         {
           name: "Foul with Tahini",
           nameAr: "فول بالطحينة",
           quantity: 2,
-          price: 15.0,
+          price: 15.5,
         },
         {
           name: "Falafel Sandwich",
           nameAr: "ساندويش فلافل",
           quantity: 1,
-          price: 8.5,
+          price: 12.0,
         },
         {
           name: "Arabic Coffee",
           nameAr: "قهوة عربية",
           quantity: 1,
-          price: 5.0,
+          price: 8.5,
         },
         {
           name: "Hummus Plate",
           nameAr: "طبق حمص",
           quantity: 1,
-          price: 12.0,
+          price: 18.0,
         },
       ],
-      subtotal: 48.5,
-      tax: 7.28,
-      total: 55.78,
+      subtotal: 67.5,
+      tax: 10.13,
+      discount: 5.0,
+      total: 72.63,
     };
 
     this.log("🧪 Testing Arabic receipt printing with comprehensive data...");

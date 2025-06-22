@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arabic Receipt Test</title>
+    <style>
+      /* Embedded Arabic font to ensure proper rendering */
+      @font-face {
+        font-family: "ArabicFont";
+        src: local("Tahoma"), local("Arial Unicode MS"), local("Segoe UI");
+        unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF,
+          U+FE70-FEFF;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "ArabicFont", Tahoma, "Arial Unicode MS";
+        font-size: 11px;
+        line-height: 1.4;
+        color: #000;
+        background: #fff;
+        width: 80mm;
+        padding: 3mm;
+        direction: rtl;
+      }
+
+      .header {
+        text-align: center;
+        border-bottom: 1px solid #000;
+        padding-bottom: 3mm;
+        margin-bottom: 3mm;
+      }
+
+      .store-name {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 1mm;
+      }
+
+      .store-name.arabic {
+        font-size: 16px;
+        direction: rtl;
+        text-align: center;
+      }
+
+      .store-info {
+        font-size: 10px;
+        margin-bottom: 1mm;
+      }
+
+      .separator {
+        text-align: center;
+        margin: 2mm 0;
+        font-size: 8px;
+      }
+
+      .order-info {
+        margin: 3mm 0;
+        font-size: 10px;
+      }
+
+      .order-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1mm;
+      }
+
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 3mm 0;
+        font-size: 10px;
+      }
+
+      .items-table th {
+        border-bottom: 1px solid #000;
+        padding: 2mm 1mm;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .items-table td {
+        padding: 2mm 1mm;
+        border-bottom: 1px dotted #ccc;
+        vertical-align: top;
+      }
+
+      .item-name {
+        text-align: right;
+        font-weight: bold;
+      }
+
+      .item-name-secondary {
+        font-size: 9px;
+        color: #666;
+        font-weight: normal;
+        margin-top: 1mm;
+      }
+
+      .number-cell {
+        text-align: center;
+        font-family: Arial, monospace;
+      }
+
+      .totals {
+        border-top: 1px solid #000;
+        margin-top: 3mm;
+        padding-top: 2mm;
+      }
+
+      .total-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1mm;
+        font-size: 10px;
+      }
+
+      .total-line.final {
+        font-weight: bold;
+        font-size: 12px;
+        border-top: 1px solid #000;
+        padding-top: 2mm;
+        margin-top: 2mm;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 4mm;
+        padding-top: 3mm;
+        border-top: 1px dashed #000;
+        font-size: 10px;
+      }
+
+      .datetime {
+        text-align: center;
+        font-size: 9px;
+        color: #666;
+        margin: 2mm 0;
+      }
+
+      .arabic-text {
+        direction: rtl;
+        text-align: right;
+      }
+
+      .english-text {
+        direction: ltr;
+        text-align: left;
+      }
+
+      /* Ensure proper Arabic number display */
+      .arabic-number {
+        font-family: Arial, monospace;
+        direction: ltr;
+      }
+
+      .test-container {
+        max-width: 80mm;
+        margin: 20px auto;
+        border: 2px solid #333;
+        padding: 10px;
+        background: white;
+      }
+
+      .test-controls {
+        margin: 20px;
+        text-align: center;
+      }
+
+      button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      @media print {
+        body {
+          width: 80mm;
+          margin: 0;
+          padding: 3mm;
+        }
+        .test-controls {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="test-controls">
+      <h2>Arabic Receipt Test - اختبار الفاتورة العربية</h2>
+      <button onclick="window.print()">Print Test / طباعة تجريبية</button>
+      <button onclick="location.reload()">Refresh / تحديث</button>
+    </div>
+
+    <div class="test-container">
+      <!-- Header Section -->
+      <div class="header">
+        <div class="store-name arabic">مطعم الفول والفلافل</div>
+        <div class="store-name english">Foul & Falafel Restaurant</div>
+        <div class="store-info arabic-text">شارع الملك فهد، الرياض</div>
+        <div class="store-info english-text">King Fahd Street, Riyadh</div>
+        <div class="store-info">هاتف: ٠١١٤٥٦٧٨٩٠</div>
+        <div class="store-info">Tel: 011-456-7890</div>
+      </div>
+
+      <!-- Order Information -->
+      <div class="order-info">
+        <div class="order-line">
+          <span>Order / رقم الطلب:</span>
+          <span>١٢٣٤٥</span>
+        </div>
+        <div class="order-line">
+          <span>Cashier / الكاشير:</span>
+          <span>أحمد محمد</span>
+        </div>
+        <div class="datetime">٢٠٢٤/١٢/٢٠ - ١١:٤١ م</div>
+      </div>
+
+      <div class="separator">* * * * * * * * * * * * * * * * * * * *</div>
+
+      <!-- Items Table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 40%">الصنف</th>
+            <th style="width: 15%">الكمية</th>
+            <th style="width: 20%">السعر</th>
+            <th style="width: 25%">المجموع</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="item-name">
+              <div class="arabic-text">فول بالطحينة</div>
+              <div class="item-name-secondary english-text">
+                Foul with Tahini
+              </div>
+            </td>
+            <td class="number-cell">٢</td>
+            <td class="number-cell">١٥.٥٠</td>
+            <td class="number-cell">٣١.٠٠</td>
+          </tr>
+          <tr>
+            <td class="item-name">
+              <div class="arabic-text">ساندويش فلافل</div>
+              <div class="item-name-secondary english-text">
+                Falafel Sandwich
+              </div>
+            </td>
+            <td class="number-cell">١</td>
+            <td class="number-cell">١٢.٠٠</td>
+            <td class="number-cell">١٢.٠٠</td>
+          </tr>
+          <tr>
+            <td class="item-name">
+              <div class="arabic-text">قهوة عربية</div>
+              <div class="item-name-secondary english-text">Arabic Coffee</div>
+            </td>
+            <td class="number-cell">١</td>
+            <td class="number-cell">٨.٥٠</td>
+            <td class="number-cell">٨.٥٠</td>
+          </tr>
+          <tr>
+            <td class="item-name">
+              <div class="arabic-text">طبق حمص</div>
+              <div class="item-name-secondary english-text">Hummus Plate</div>
+            </td>
+            <td class="number-cell">١</td>
+            <td class="number-cell">١٨.٠٠</td>
+            <td class="number-cell">١٨.٠٠</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totals Section -->
+      <div class="totals">
+        <div class="total-line">
+          <span>المجموع الفرعي:</span>
+          <span>٦٩.٥٠ ريال</span>
+        </div>
+
+        <div class="total-line">
+          <span>الضريبة:</span>
+          <span>١٠.٤٣ ريال</span>
+        </div>
+
+        <div class="total-line">
+          <span>الخصم:</span>
+          <span>-٥.٠٠ ريال</span>
+        </div>
+
+        <div class="total-line final">
+          <span>الإجمالي:</span>
+          <span>٧٤.٩٣ ريال</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="arabic-text">شكراً لزيارتكم!</div>
+        <div class="english-text">Thank you for your visit!</div>
+      </div>
+    </div>
+  </body>
+</html>
