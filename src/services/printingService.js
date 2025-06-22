@@ -225,32 +225,78 @@ class PrintingService {
                 font-size: 10px;
             }
             
-            .items-table {
-                width: 100%;
-                border-collapse: collapse;
+            .items-section {
                 margin: 3mm 0;
+                width: 100%;
             }
             
-            .items-table th,
-            .items-table td {
-                padding: 1mm;
-                text-align: right;
-                border-bottom: 1px dotted #ccc;
-                font-size: 10px;
+            .items-header {
+                border-bottom: 2px solid #000;
+                margin-bottom: 2mm;
             }
             
-            .items-table th {
+            .header-row-ar,
+            .header-row-en {
+                display: flex;
+                justify-content: space-between;
                 font-weight: bold;
-                background: #f0f0f0;
+                padding: 1mm 0;
+                font-size: 9px;
+            }
+            
+            .header-row-ar {
+                direction: rtl;
+                text-align: right;
+            }
+            
+            .header-row-en {
+                direction: ltr;
+                text-align: left;
+                color: #666;
+                font-size: 8px;
+            }
+            
+            .item-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 2mm 0;
+                border-bottom: 1px dotted #ccc;
+                direction: rtl;
+            }
+            
+            .col-total {
+                width: 20%;
+                text-align: center;
+                font-weight: bold;
+            }
+            
+            .col-price {
+                width: 18%;
+                text-align: center;
+            }
+            
+            .col-qty {
+                width: 12%;
+                text-align: center;
+            }
+            
+            .col-item {
+                width: 50%;
+                text-align: right;
+                direction: rtl;
             }
             
             .item-name-ar {
                 font-weight: bold;
+                font-size: 11px;
+                margin-bottom: 1mm;
                 direction: rtl;
+                text-align: right;
             }
             
             .item-name-en {
-                font-size: 9px;
+                font-size: 8px;
                 color: #666;
                 direction: ltr;
                 text-align: left;
@@ -349,45 +395,51 @@ class PrintingService {
             <div>${now.toLocaleString("en-US")}</div>
         </div>
 
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th style="width: 15%">المجموع</th>
-                    <th style="width: 15%">السعر</th>
-                    <th style="width: 15%">الكمية</th>
-                    <th style="width: 55%">الصنف</th>
-                </tr>
-                <tr>
-                    <th style="width: 15%">Total</th>
-                    <th style="width: 15%">Price</th>
-                    <th style="width: 15%">Qty</th>
-                    <th style="width: 55%">Item</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Improved Arabic Items Section -->
+        <div class="items-section">
+            <div class="items-header">
+                <div class="header-row-ar">
+                    <span class="col-total">المجموع</span>
+                    <span class="col-price">السعر</span>
+                    <span class="col-qty">الكمية</span>
+                    <span class="col-item">الصنف</span>
+                </div>
+                <div class="header-row-en">
+                    <span class="col-total">Total</span>
+                    <span class="col-price">Price</span>
+                    <span class="col-qty">Qty</span>
+                    <span class="col-item">Item</span>
+                </div>
+            </div>
+            
+            <div class="items-list">
                 ${
                   orderData.orderItems
                     ?.map(
                       (item) => `
-                    <tr>
-                        <td>${arabicNumerals(
+                    <div class="item-row">
+                        <span class="col-total">${arabicNumerals(
                           (item.quantity * item.price).toFixed(2)
-                        )}</td>
-                        <td>${arabicNumerals(item.price.toFixed(2))}</td>
-                        <td>${arabicNumerals(item.quantity)}</td>
-                        <td>
+                        )}</span>
+                        <span class="col-price">${arabicNumerals(
+                          item.price.toFixed(2)
+                        )}</span>
+                        <span class="col-qty">${arabicNumerals(
+                          String(item.quantity)
+                        )}</span>
+                        <span class="col-item">
                             <div class="item-name-ar">${
                               item.nameAr || item.name
                             }</div>
                             <div class="item-name-en">${item.name}</div>
-                        </td>
-                    </tr>
+                        </span>
+                    </div>
                 `
                     )
                     .join("") || ""
                 }
-            </tbody>
-        </table>
+            </div>
+        </div>
 
         <div class="totals">
             <div class="total-row">
@@ -602,6 +654,238 @@ class PrintingService {
     const newWindow = window.open("", "_blank", "width=400,height=600");
     newWindow.document.write(html);
     newWindow.document.close();
+  }
+
+  /**
+   * Print customer receipt - Required by cashier page
+   */
+  async printCustomerReceipt(orderData, printerName = null) {
+    try {
+      console.log("🧾 Printing customer receipt...", orderData);
+      return await this.printReceipt(orderData, printerName);
+    } catch (error) {
+      console.error("❌ Customer receipt printing failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Print kitchen ticket - Required by cashier page
+   */
+  async printKitchenTicket(orderData, printerName = null) {
+    try {
+      console.log("🍽️ Printing kitchen ticket...", orderData);
+
+      // Generate kitchen-specific HTML
+      const kitchenHTML = this.generateKitchenTicketHTML(orderData);
+
+      // Use HTML printing for kitchen ticket
+      if (!this.qzInstance) {
+        await this.initializeQZ();
+      }
+
+      const printers = await this.getPrinters();
+      const targetPrinter = printerName || printers[0];
+
+      if (!targetPrinter) {
+        throw new Error("No printer available for kitchen ticket");
+      }
+
+      const config = this.qzInstance.configs.create(targetPrinter, {
+        colorType: "blackwhite",
+        units: "in",
+        size: { width: 3.15, height: 8.0 },
+        margins: { top: 0.1, right: 0.1, bottom: 0.1, left: 0.1 },
+        orientation: "portrait",
+      });
+
+      const printData = [
+        {
+          type: "pixel",
+          format: "html",
+          flavor: "plain",
+          data: kitchenHTML,
+        },
+      ];
+
+      await this.qzInstance.print(config, printData);
+      console.log("✅ Kitchen ticket printed successfully");
+      return true;
+    } catch (error) {
+      console.error("❌ Kitchen ticket printing failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Print both customer receipt and kitchen ticket - Required by cashier page
+   */
+  async printBothReceipts(
+    orderData,
+    customerPrinter = null,
+    kitchenPrinter = null
+  ) {
+    try {
+      console.log("🖨️ Printing both receipts...", orderData);
+
+      const results = await Promise.allSettled([
+        this.printCustomerReceipt(orderData, customerPrinter),
+        this.printKitchenTicket(orderData, kitchenPrinter),
+      ]);
+
+      const customerResult = results[0];
+      const kitchenResult = results[1];
+
+      // Check results
+      if (customerResult.status === "rejected") {
+        console.error("Customer receipt failed:", customerResult.reason);
+      }
+      if (kitchenResult.status === "rejected") {
+        console.error("Kitchen ticket failed:", kitchenResult.reason);
+      }
+
+      const success =
+        customerResult.status === "fulfilled" &&
+        kitchenResult.status === "fulfilled";
+
+      if (success) {
+        console.log("✅ Both receipts printed successfully");
+        return true;
+      } else {
+        throw new Error("One or both receipts failed to print");
+      }
+    } catch (error) {
+      console.error("❌ Printing both receipts failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate kitchen ticket HTML
+   */
+  generateKitchenTicketHTML(orderData) {
+    const now = new Date();
+
+    return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap');
+            
+            body {
+                font-family: 'Noto Sans Arabic', Arial, sans-serif;
+                font-size: 14px;
+                line-height: 1.3;
+                color: #000;
+                background: #fff;
+                width: 80mm;
+                margin: 0 auto;
+                padding: 3mm;
+                direction: rtl;
+            }
+            
+            .header {
+                text-align: center;
+                border-bottom: 2px solid #000;
+                padding-bottom: 3mm;
+                margin-bottom: 3mm;
+            }
+            
+            .kitchen-title {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 2mm;
+            }
+            
+            .order-info {
+                font-size: 12px;
+                margin: 2mm 0;
+            }
+            
+            .items-list {
+                margin: 3mm 0;
+            }
+            
+            .kitchen-item {
+                padding: 2mm 0;
+                border-bottom: 1px dashed #ccc;
+            }
+            
+            .kitchen-item-name {
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 1mm;
+            }
+            
+            .kitchen-item-qty {
+                font-size: 14px;
+                color: #666;
+            }
+            
+            .kitchen-item-notes {
+                font-size: 12px;
+                color: #888;
+                margin-top: 1mm;
+            }
+            
+            .footer {
+                text-align: center;
+                margin-top: 5mm;
+                padding-top: 3mm;
+                border-top: 1px solid #000;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="kitchen-title">🍽️ تذكرة المطبخ</div>
+            <div class="kitchen-title">KITCHEN TICKET</div>
+        </div>
+
+        <div class="order-info">
+            <div><strong>رقم الطلب:</strong> ${
+              orderData.orderNumber || "N/A"
+            }</div>
+            <div><strong>Order No:</strong> ${
+              orderData.orderNumber || "N/A"
+            }</div>
+            <div><strong>الوقت:</strong> ${this.formatDateTimeArabic(now)}</div>
+            <div><strong>Time:</strong> ${now.toLocaleString()}</div>
+        </div>
+
+        <div class="items-list">
+            ${(orderData.orderItems || [])
+              .map(
+                (item) => `
+                <div class="kitchen-item">
+                    <div class="kitchen-item-name">${
+                      item.nameAr || item.name
+                    }</div>
+                    <div class="kitchen-item-name">${item.name}</div>
+                    <div class="kitchen-item-qty">الكمية: ${this.convertToArabicNumerals(
+                      item.quantity.toString()
+                    )} | Qty: ${item.quantity}</div>
+                    ${
+                      item.notes
+                        ? `<div class="kitchen-item-notes">ملاحظات: ${item.notes}</div>`
+                        : ""
+                    }
+                </div>
+            `
+              )
+              .join("")}
+        </div>
+
+        <div class="footer">
+            <div>💫 حضّر بعناية - Prepare with care</div>
+            <div>${now.toLocaleString()}</div>
+        </div>
+    </body>
+    </html>
+    `;
   }
 }
 
