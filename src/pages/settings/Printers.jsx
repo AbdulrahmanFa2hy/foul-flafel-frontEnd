@@ -761,14 +761,29 @@ function Printers() {
     printingService.previewReceipt(content);
   }, []);
 
-  // Memoized Arabic receipt test
+  // Memoized Arabic receipt test using new HTML-based printing
   const testArabicReceipt = useCallback(async () => {
     try {
-      await printingService.printArabicReceiptExample();
-      toast.success("Arabic receipt printed successfully!");
+      // Get first available printer
+      const printers = await printingService.getPrinters();
+      if (printers.length === 0) {
+        throw new Error(
+          "No printers found. Please ensure QZ Tray is running and printers are configured."
+        );
+      }
+
+      const result = await printingService.printArabicTest(printers[0]);
+
+      if (result) {
+        toast.success(
+          "✅ Arabic receipt printed successfully using HTML method!"
+        );
+      } else {
+        toast.error("❌ Arabic receipt print failed");
+      }
     } catch (error) {
       console.error("Arabic receipt test failed:", error);
-      toast.error(`Arabic receipt test failed: ${error.message}`);
+      toast.error(`❌ Arabic receipt test failed: ${error.message}`);
     }
   }, []);
 
