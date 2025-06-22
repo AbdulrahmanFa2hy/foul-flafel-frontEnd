@@ -540,6 +540,7 @@
     "enableAutoPrint": "تفعيل الطباعة التلقائية",
     "enablePrinter": "تفعيل الطابعة",
     "setAsDefault": "تعيين كطابعة افتراضية",
+    "supportArabic": "دعم النص العربي",
     "networkRequirements": "متطلبات الشبكة",
     "supportedPrinters": "الطابعات المدعومة",
     "configurationTips": "نصائح التكوين",

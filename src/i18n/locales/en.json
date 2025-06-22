@@ -497,6 +497,7 @@
     "paperWidth": "Paper Width",
     "setAsDefault": "Set as Default",
     "autoPrint": "Auto Print",
+    "supportArabic": "Support Arabic Text",
     "printerEnabled": "Printer Enabled",
     "addNewPrinter": "Add New Printer",
     "editPrinter": "Edit Printer",

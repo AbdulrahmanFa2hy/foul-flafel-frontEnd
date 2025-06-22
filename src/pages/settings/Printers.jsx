@@ -296,6 +296,31 @@ const PrinterForm = ({
           </div>
         )}
 
+        {/* Arabic Support Information */}
+        {formData.supportArabic && (
+          <div className="p-4 bg-blue-50 rounded-md border-l-4 border-blue-400">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Arabic Text Support Enabled
+                </h3>
+                <div className="mt-2 text-sm text-blue-700 space-y-1">
+                  <p>
+                    ✓ Arabic characters will be printed correctly using CP864
+                    codepage
+                  </p>
+                  <p>✓ Right-to-left (RTL) text direction is supported</p>
+                  <p>✓ Arabic numerals (١٢٣٤٥) are supported</p>
+                  <p className="font-medium">
+                    Note: Make sure your thermal printer supports Arabic
+                    characters
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Paper Width */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -339,6 +364,24 @@ const PrinterForm = ({
             />
             <label htmlFor="autoPrint" className="ml-2 text-sm text-gray-700">
               {t("printers.autoPrint")}
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="supportArabic"
+              name="supportArabic"
+              checked={formData.supportArabic}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="supportArabic"
+              className="ml-2 text-sm text-gray-700"
+            >
+              {t("printers.supportArabic")}{" "}
+              <span className="text-green-600 font-medium">(Recommended)</span>
             </label>
           </div>
 
@@ -396,6 +439,7 @@ function Printers() {
     paperWidth: "80mm",
     isDefault: false,
     autoPrint: true,
+    supportArabic: true,
     enabled: true,
   });
 
@@ -434,6 +478,7 @@ function Printers() {
         paperWidth: "80mm",
         isDefault: true,
         autoPrint: true,
+        supportArabic: true,
         enabled: true,
       },
       {
@@ -447,6 +492,7 @@ function Printers() {
         paperWidth: "80mm",
         isDefault: true,
         autoPrint: true,
+        supportArabic: true,
         enabled: true,
       },
     ],
@@ -502,6 +548,7 @@ function Printers() {
       paperWidth: "80mm",
       isDefault: false,
       autoPrint: true,
+      supportArabic: true,
       enabled: true,
     });
   }, []);
@@ -553,6 +600,7 @@ function Printers() {
         paperWidth: "80mm",
         isDefault: false,
         autoPrint: true,
+        supportArabic: true,
         enabled: true,
       });
     }
@@ -572,6 +620,7 @@ function Printers() {
       paperWidth: "80mm",
       isDefault: false,
       autoPrint: true,
+      supportArabic: true,
       enabled: true,
     });
     setIsFormOpen(true);

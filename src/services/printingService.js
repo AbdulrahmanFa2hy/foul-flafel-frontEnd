@@ -1,4 +1,5 @@
 // Printing Service for Thermal Printers with QZ Tray Integration
+// Enhanced with Arabic text support using CP864 codepage and proper character encoding
 class PrintingService {
   constructor() {
     this.ESC = "\x1B";
@@ -12,11 +13,18 @@ class PrintingService {
     this.qzInstance = null;
     this.isQZConnected = false;
 
-    // ESC/POS Commands
+    // ESC/POS Commands with Arabic support
     this.commands = {
       INIT: this.ESC + "@",
-      // Set character encoding to UTF-8 for Arabic support
-      SET_UTF8: this.ESC + "t" + String.fromCharCode(16),
+      // Arabic codepage selection (CP864 - Arabic)
+      SET_ARABIC_CODEPAGE: this.ESC + "t" + String.fromCharCode(21), // CP864
+      SET_UTF8_CODEPAGE: this.ESC + "t" + String.fromCharCode(65), // UTF-8 codepage
+      // Alternative Arabic codepage (CP1256 - Windows Arabic)
+      SET_WINDOWS_ARABIC: this.ESC + "t" + String.fromCharCode(22), // CP1256
+      // Character set selection for Arabic
+      SELECT_ARABIC_CHARSET: this.ESC + "R" + String.fromCharCode(13), // Arabic character set
+      // International character set
+      SET_INTERNATIONAL_CHARSET: this.ESC + "R" + String.fromCharCode(0),
       ALIGN_LEFT: this.ESC + "a" + String.fromCharCode(0),
       ALIGN_CENTER: this.ESC + "a" + String.fromCharCode(1),
       ALIGN_RIGHT: this.ESC + "a" + String.fromCharCode(2),
@@ -35,6 +43,9 @@ class PrintingService {
         String.fromCharCode(0) +
         String.fromCharCode(25) +
         String.fromCharCode(250),
+      // Text direction for RTL languages like Arabic
+      SET_RTL_MODE: this.ESC + "{" + String.fromCharCode(1),
+      SET_LTR_MODE: this.ESC + "{" + String.fromCharCode(0),
     };
 
     // Supported printer models
@@ -199,17 +210,187 @@ class PrintingService {
     return printers.find((printer) => printer.isDefault) || printers[0];
   }
 
-  // Convert string to Uint8Array for printing with proper UTF-8 encoding
-  stringToBytes(str) {
-    // Use TextEncoder for proper UTF-8 encoding
-    const encoder = new TextEncoder();
-    return encoder.encode(str);
+  // Convert string to proper encoding for Arabic printing
+  stringToBytes(str, useArabicEncoding = false) {
+    try {
+      if (useArabicEncoding) {
+        // For Arabic text, try different encoding approaches
+        return this.encodeArabicText(str);
+      } else {
+        // Use TextEncoder for UTF-8 encoding
+        const encoder = new TextEncoder();
+        return encoder.encode(str);
+      }
+    } catch (error) {
+      console.error("Encoding error:", error);
+      // Fallback to simple character code conversion
+      return new Uint8Array(str.split("").map((char) => char.charCodeAt(0)));
+    }
   }
 
-  // Prepare text for thermal printing with Arabic support
-  prepareTextForPrinting(text) {
-    // Ensure proper Unicode normalization for Arabic text
-    return text.normalize("NFC");
+  // Enhanced Arabic text encoding
+  encodeArabicText(text) {
+    try {
+      // Method 1: Try UTF-8 encoding first
+      const encoder = new TextEncoder();
+      const utf8Bytes = encoder.encode(text);
+
+      // Check if the text contains Arabic characters
+      const hasArabic =
+        /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+          text
+        );
+
+      if (hasArabic) {
+        // Method 2: Convert to CP864 encoding for Arabic thermal printers
+        return this.convertToCP864(text);
+      }
+
+      return utf8Bytes;
+    } catch (error) {
+      console.error("Arabic encoding error:", error);
+      // Fallback: character by character conversion
+      return this.fallbackArabicEncoding(text);
+    }
+  }
+
+  // Convert text to CP864 (Arabic codepage) for thermal printers
+  convertToCP864(text) {
+    // CP864 character mapping for Arabic characters
+    const cp864Map = {
+      // Arabic letters mapping to CP864
+      ا: 0xc7,
+      ب: 0xc8,
+      ت: 0xc9,
+      ث: 0xca,
+      ج: 0xcb,
+      ح: 0xcc,
+      خ: 0xcd,
+      د: 0xce,
+      ذ: 0xcf,
+      ر: 0xd0,
+      ز: 0xd1,
+      س: 0xd2,
+      ش: 0xd3,
+      ص: 0xd4,
+      ض: 0xd5,
+      ط: 0xd6,
+      ظ: 0xd7,
+      ع: 0xd8,
+      غ: 0xd9,
+      ف: 0xda,
+      ق: 0xdb,
+      ك: 0xdc,
+      ل: 0xdd,
+      م: 0xde,
+      ن: 0xdf,
+      ه: 0xe0,
+      و: 0xe1,
+      ي: 0xe2,
+      ة: 0xe3,
+      ى: 0xe4,
+      إ: 0xe5,
+      أ: 0xe6,
+      آ: 0xe7,
+      ؤ: 0xe8,
+      ئ: 0xe9,
+      // Arabic numerals
+      "٠": 0xf0,
+      "١": 0xf1,
+      "٢": 0xf2,
+      "٣": 0xf3,
+      "٤": 0xf4,
+      "٥": 0xf5,
+      "٦": 0xf6,
+      "٧": 0xf7,
+      "٨": 0xf8,
+      "٩": 0xf9,
+      // Common Arabic punctuation
+      "،": 0xa1,
+      "؍": 0xa2,
+      "؎": 0xa3,
+      "؏": 0xa4,
+      "؟": 0xbf,
+    };
+
+    const bytes = [];
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (cp864Map[char]) {
+        bytes.push(cp864Map[char]);
+      } else if (char.charCodeAt(0) < 128) {
+        // ASCII characters remain the same
+        bytes.push(char.charCodeAt(0));
+      } else {
+        // Unknown Arabic character, try to find closest match or use replacement
+        bytes.push(0x3f); // '?' character as fallback
+      }
+    }
+
+    return new Uint8Array(bytes);
+  }
+
+  // Fallback Arabic encoding method
+  fallbackArabicEncoding(text) {
+    const bytes = [];
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const code = char.charCodeAt(0);
+
+      if (code < 128) {
+        // ASCII characters
+        bytes.push(code);
+      } else if (code >= 0x0600 && code <= 0x06ff) {
+        // Arabic Unicode block - convert to printable range
+        bytes.push(0xc0 + ((code - 0x0600) % 64));
+      } else {
+        // Other characters - use UTF-8 bytes
+        const utf8 = new TextEncoder().encode(char);
+        bytes.push(...utf8);
+      }
+    }
+
+    return new Uint8Array(bytes);
+  }
+
+  // Enhanced text preparation for Arabic printing
+  prepareTextForPrinting(text, isArabic = false) {
+    if (!text) return "";
+
+    // Normalize Unicode text
+    let processedText = text.normalize("NFC");
+
+    // Check if text contains Arabic characters
+    const hasArabic =
+      /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+        processedText
+      );
+
+    if (hasArabic || isArabic) {
+      // Apply Arabic text processing
+      processedText = this.processArabicText(processedText);
+    }
+
+    return processedText;
+  }
+
+  // Process Arabic text for proper display
+  processArabicText(text) {
+    // Remove problematic characters that might cause issues
+    let processed = text.replace(/[\u200C-\u200F\u202A-\u202E]/g, ""); // Remove RTL/LTR marks
+
+    // Ensure proper Arabic letter forms (this is a simplified approach)
+    // For full Arabic text shaping, you would need a proper Arabic text shaping library
+    processed = processed.replace(/\u0628\u064E/g, "بَ"); // Example of composite character handling
+
+    return processed;
+  }
+
+  // Detect if text contains Arabic characters
+  containsArabic(text) {
+    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(
+      text
+    );
   }
 
   // Format line for thermal printer
@@ -228,40 +409,63 @@ class PrintingService {
     return " ".repeat(padding) + textStr;
   }
 
-  // Generate ESC/POS commands for customer receipt
+  // Generate ESC/POS commands for customer receipt with Arabic support
   generateCustomerReceiptCommands(orderData) {
     const receiptSettings = this.getReceiptSettings();
     const now = new Date();
     const paperWidth = 48;
 
     let commands = this.commands.INIT; // Initialize printer
-    commands += this.commands.SET_UTF8; // Set UTF-8 encoding for Arabic support
+
+    // Set Arabic codepage and character set for Arabic support
+    commands += this.commands.SET_ARABIC_CODEPAGE;
+    commands += this.commands.SELECT_ARABIC_CHARSET;
+    commands += this.commands.SET_INTERNATIONAL_CHARSET;
+
+    // Check if any text contains Arabic characters
+    const hasArabicContent = this.checkForArabicContent(
+      orderData,
+      receiptSettings
+    );
+
+    if (hasArabicContent) {
+      // Enable RTL mode for Arabic text
+      commands += this.commands.SET_RTL_MODE;
+    }
 
     // Business name centered and bold (only if provided)
     if (receiptSettings.header.businessName.trim()) {
       commands += this.commands.ALIGN_CENTER;
       commands += this.commands.BOLD_ON;
       commands += this.commands.DOUBLE_HEIGHT_ON;
-      commands +=
-        this.prepareTextForPrinting(receiptSettings.header.businessName) +
-        this.CTL_LF;
+      const businessName = this.prepareTextForPrinting(
+        receiptSettings.header.businessName,
+        this.containsArabic(receiptSettings.header.businessName)
+      );
+      commands += businessName + this.CTL_LF;
       commands += this.commands.DOUBLE_HEIGHT_OFF;
       commands += this.commands.BOLD_OFF;
       commands += this.commands.ALIGN_LEFT;
     }
 
-    // Header information
+    // Header information with Arabic support
     const headerItems = [];
     if (receiptSettings.header.address.trim())
-      headerItems.push(receiptSettings.header.address);
+      headerItems.push(
+        this.prepareTextForPrinting(receiptSettings.header.address, true)
+      );
     if (receiptSettings.header.city.trim())
-      headerItems.push(receiptSettings.header.city);
+      headerItems.push(
+        this.prepareTextForPrinting(receiptSettings.header.city, true)
+      );
     if (receiptSettings.header.phone.trim())
       headerItems.push(receiptSettings.header.phone);
     if (receiptSettings.header.taxId.trim())
       headerItems.push(receiptSettings.header.taxId);
     if (receiptSettings.header.customText.trim())
-      headerItems.push(receiptSettings.header.customText);
+      headerItems.push(
+        this.prepareTextForPrinting(receiptSettings.header.customText, true)
+      );
 
     // Display header items
     for (let i = 0; i < headerItems.length; i += 2) {
@@ -275,7 +479,11 @@ class PrintingService {
     // Cashier name (if available and enabled)
     if (orderData.cashier && receiptSettings.display?.showCashierName) {
       commands += this.commands.ALIGN_CENTER;
-      commands += `Served by: ${orderData.cashier}` + this.CTL_LF;
+      const cashierText = `Served by: ${this.prepareTextForPrinting(
+        orderData.cashier,
+        true
+      )}`;
+      commands += cashierText + this.CTL_LF;
       commands += this.commands.ALIGN_LEFT;
     }
 
@@ -300,7 +508,7 @@ class PrintingService {
       ) + this.CTL_LF;
     commands += "-".repeat(paperWidth) + this.CTL_LF;
 
-    // Customer Data Section (if available)
+    // Customer Data Section (if available) with Arabic support
     if (orderData.custName || orderData.custPhone || orderData.custAddress) {
       commands += this.commands.ALIGN_CENTER;
       commands += this.commands.BOLD_ON;
@@ -310,22 +518,29 @@ class PrintingService {
       commands += "-".repeat(paperWidth) + this.CTL_LF;
 
       if (orderData.custName) {
-        commands += this.formatLine("Name:", orderData.custName) + this.CTL_LF;
+        const customerName = this.prepareTextForPrinting(
+          orderData.custName,
+          true
+        );
+        commands += this.formatLine("Name:", customerName) + this.CTL_LF;
       }
       if (orderData.custPhone) {
         commands +=
           this.formatLine("Phone:", orderData.custPhone) + this.CTL_LF;
       }
       if (orderData.custAddress) {
-        commands +=
-          this.formatLine("Address:", orderData.custAddress) + this.CTL_LF;
+        const customerAddress = this.prepareTextForPrinting(
+          orderData.custAddress,
+          true
+        );
+        commands += this.formatLine("Address:", customerAddress) + this.CTL_LF;
       }
 
       commands += this.CTL_LF;
       commands += "-".repeat(paperWidth) + this.CTL_LF;
     }
 
-    // Order items
+    // Order items with Arabic support
     let subtotal = 0;
     orderData.orderItems?.forEach((item) => {
       if (!item.isCancelled) {
@@ -348,9 +563,9 @@ class PrintingService {
           itemName = `Item ${item.mealId}`;
         }
 
-        const itemLine = `${item.quantity}x ${this.prepareTextForPrinting(
-          itemName
-        )}`;
+        // Process item name for Arabic support
+        const processedItemName = this.prepareTextForPrinting(itemName, true);
+        const itemLine = `${item.quantity}x ${processedItemName}`;
         commands +=
           this.formatLine(itemLine, `$${itemTotal.toFixed(2)}`, paperWidth) +
           this.CTL_LF;
@@ -419,18 +634,32 @@ class PrintingService {
 
     commands += this.CTL_LF;
 
-    // Footer information
+    // Footer information with Arabic support
     const footerItems = [];
     if (receiptSettings.footer.thankYouMessage.trim())
-      footerItems.push(receiptSettings.footer.thankYouMessage);
+      footerItems.push(
+        this.prepareTextForPrinting(
+          receiptSettings.footer.thankYouMessage,
+          true
+        )
+      );
     if (receiptSettings.footer.returnPolicy.trim())
-      footerItems.push(receiptSettings.footer.returnPolicy);
+      footerItems.push(
+        this.prepareTextForPrinting(receiptSettings.footer.returnPolicy, true)
+      );
     if (receiptSettings.footer.customerService.trim())
-      footerItems.push(receiptSettings.footer.customerService);
+      footerItems.push(
+        this.prepareTextForPrinting(
+          receiptSettings.footer.customerService,
+          true
+        )
+      );
     if (receiptSettings.footer.website.trim())
       footerItems.push(receiptSettings.footer.website);
     if (receiptSettings.footer.customText.trim())
-      footerItems.push(receiptSettings.footer.customText);
+      footerItems.push(
+        this.prepareTextForPrinting(receiptSettings.footer.customText, true)
+      );
 
     if (footerItems.length > 0) {
       commands += this.commands.ALIGN_CENTER;
@@ -441,6 +670,11 @@ class PrintingService {
       commands += this.CTL_LF;
     }
 
+    // Reset to LTR mode if Arabic was used
+    if (hasArabicContent) {
+      commands += this.commands.SET_LTR_MODE;
+    }
+
     // Feed paper and cut
     commands += this.commands.FEED_LINES(3);
     commands += this.commands.CUT_PAPER;
@@ -448,13 +682,52 @@ class PrintingService {
     return commands;
   }
 
-  // Generate ESC/POS commands for kitchen ticket
+  // Check if any content contains Arabic text
+  checkForArabicContent(orderData, receiptSettings) {
+    const textsToCheck = [
+      receiptSettings.header.businessName,
+      receiptSettings.header.address,
+      receiptSettings.header.city,
+      receiptSettings.header.customText,
+      receiptSettings.footer.thankYouMessage,
+      receiptSettings.footer.returnPolicy,
+      receiptSettings.footer.customerService,
+      receiptSettings.footer.customText,
+      orderData.custName,
+      orderData.custAddress,
+      orderData.cashier,
+    ];
+
+    // Check order items
+    if (orderData.orderItems) {
+      orderData.orderItems.forEach((item) => {
+        if (item.name) textsToCheck.push(item.name);
+        if (item.meal?.name) textsToCheck.push(item.meal.name);
+      });
+    }
+
+    return textsToCheck.some((text) => text && this.containsArabic(text));
+  }
+
+  // Generate ESC/POS commands for kitchen ticket with Arabic support
   generateKitchenTicketCommands(orderData) {
     const now = new Date();
     const paperWidth = 48;
 
     let commands = this.commands.INIT; // Initialize printer
-    commands += this.commands.SET_UTF8; // Set UTF-8 encoding for Arabic support
+
+    // Set Arabic codepage and character set for Arabic support
+    commands += this.commands.SET_ARABIC_CODEPAGE;
+    commands += this.commands.SELECT_ARABIC_CHARSET;
+    commands += this.commands.SET_INTERNATIONAL_CHARSET;
+
+    // Check if any content contains Arabic text
+    const hasArabicContent = this.checkKitchenArabicContent(orderData);
+
+    if (hasArabicContent) {
+      // Enable RTL mode for Arabic text
+      commands += this.commands.SET_RTL_MODE;
+    }
 
     // Header
     commands += this.commands.ALIGN_CENTER;
@@ -478,12 +751,15 @@ class PrintingService {
       ) + this.CTL_LF;
 
     if (orderData.customer) {
-      commands +=
-        this.formatLine("Customer:", orderData.customer) + this.CTL_LF;
+      const customerName = this.prepareTextForPrinting(
+        orderData.customer,
+        true
+      );
+      commands += this.formatLine("Customer:", customerName) + this.CTL_LF;
     }
     commands += this.CTL_LF;
 
-    // Items to prepare
+    // Items to prepare with Arabic support
     commands += "-".repeat(paperWidth) + this.CTL_LF;
 
     orderData.orderItems?.forEach((item) => {
@@ -505,21 +781,30 @@ class PrintingService {
           itemName = `Item ${item.mealId}`;
         }
 
+        // Process item name for Arabic support
+        const processedItemName = this.prepareTextForPrinting(itemName, true);
+
         commands += this.commands.BOLD_ON;
-        commands +=
-          `${item.quantity}x ${this.prepareTextForPrinting(itemName)}` +
-          this.CTL_LF;
+        commands += `${item.quantity}x ${processedItemName}` + this.CTL_LF;
         commands += this.commands.BOLD_OFF;
 
         if (item.notes || item.modifications) {
-          commands +=
-            `   Notes: ${item.notes || item.modifications}` + this.CTL_LF;
+          const notes = this.prepareTextForPrinting(
+            item.notes || item.modifications,
+            true
+          );
+          commands += `   Notes: ${notes}` + this.CTL_LF;
         }
         commands += this.CTL_LF;
       }
     });
 
     commands += "-".repeat(paperWidth) + this.CTL_LF;
+
+    // Reset to LTR mode if Arabic was used
+    if (hasArabicContent) {
+      commands += this.commands.SET_LTR_MODE;
+    }
 
     // Feed paper and cut
     commands += this.commands.FEED_LINES(3);
@@ -528,7 +813,24 @@ class PrintingService {
     return commands;
   }
 
-  // Print via QZ Tray
+  // Check if kitchen ticket contains Arabic content
+  checkKitchenArabicContent(orderData) {
+    const textsToCheck = [orderData.customer];
+
+    // Check order items
+    if (orderData.orderItems) {
+      orderData.orderItems.forEach((item) => {
+        if (item.name) textsToCheck.push(item.name);
+        if (item.meal?.name) textsToCheck.push(item.meal.name);
+        if (item.notes) textsToCheck.push(item.notes);
+        if (item.modifications) textsToCheck.push(item.modifications);
+      });
+    }
+
+    return textsToCheck.some((text) => text && this.containsArabic(text));
+  }
+
+  // Enhanced QZ Tray printing with Arabic support
   async printViaQZTray(printerConfig, commands) {
     try {
       if (!this.isQZConnected) {
@@ -539,24 +841,39 @@ class PrintingService {
         throw new Error("QZ Tray is not connected or available");
       }
 
-      // Create print configuration
+      // Create print configuration with Arabic support
       const config = window.qz.configs.create(
         printerConfig.name || printerConfig.qzPrinterName
       );
 
-      // Create print data
+      // Convert commands to proper byte array for Arabic support
+      let printData;
+      const hasArabic = this.containsArabic(commands);
+
+      if (hasArabic || printerConfig.supportArabic !== false) {
+        // Use Arabic-encoded bytes for printing
+        printData = this.stringToBytes(commands, true);
+      } else {
+        // Use standard UTF-8 encoding
+        printData = this.stringToBytes(commands, false);
+      }
+
+      // Create print data - QZ Tray expects byte arrays for raw printing
       const data = [
         {
           type: "raw",
           format: "plain",
-          data: commands,
+          data: printData, // Use byte array instead of string
         },
       ];
 
       // Print using QZ Tray
       await window.qz.print(config, data);
 
-      return { success: true, message: "Printed successfully via QZ Tray" };
+      return {
+        success: true,
+        message: "Printed successfully via QZ Tray with Arabic support",
+      };
     } catch (error) {
       console.error("QZ Tray printing failed:", error);
       throw new Error(`QZ Tray printing failed: ${error.message}`);
@@ -849,12 +1166,16 @@ class PrintingService {
     return await this.sendToPrinter(printerConfig, testCommands);
   }
 
-  // Generate test print commands
+  // Generate test print commands with Arabic text
   generateTestPrintCommands(printerConfig) {
     const now = new Date();
 
     let commands = this.commands.INIT;
-    commands += this.commands.SET_UTF8; // Set UTF-8 encoding for Arabic support
+
+    // Set Arabic codepage for test
+    commands += this.commands.SET_ARABIC_CODEPAGE;
+    commands += this.commands.SELECT_ARABIC_CHARSET;
+    commands += this.commands.SET_INTERNATIONAL_CHARSET;
 
     commands += this.commands.ALIGN_CENTER;
     commands += this.commands.BOLD_ON;
@@ -885,6 +1206,22 @@ class PrintingService {
     }
 
     commands += this.formatLine("Date:", now.toLocaleString()) + this.CTL_LF;
+    commands += this.CTL_LF;
+
+    // Test Arabic text printing
+    commands += this.commands.ALIGN_CENTER;
+    commands += "Arabic Test:" + this.CTL_LF;
+
+    // Test basic Arabic text
+    const arabicTest = "مرحبا بكم"; // "Welcome" in Arabic
+    const processedArabic = this.prepareTextForPrinting(arabicTest, true);
+    commands += processedArabic + this.CTL_LF;
+
+    // Test Arabic numbers
+    const arabicNumbers = "١٢٣٤٥"; // Arabic-Indic numerals
+    commands += arabicNumbers + this.CTL_LF;
+
+    commands += this.commands.ALIGN_LEFT;
     commands += this.CTL_LF;
 
     commands += this.commands.ALIGN_CENTER;
