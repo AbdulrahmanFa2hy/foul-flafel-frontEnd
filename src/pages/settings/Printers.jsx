@@ -761,6 +761,17 @@ function Printers() {
     printingService.previewReceipt(content);
   }, []);
 
+  // Memoized Arabic receipt test
+  const testArabicReceipt = useCallback(async () => {
+    try {
+      await printingService.printArabicReceiptExample();
+      toast.success("Arabic receipt printed successfully!");
+    } catch (error) {
+      console.error("Arabic receipt test failed:", error);
+      toast.error(`Arabic receipt test failed: ${error.message}`);
+    }
+  }, []);
+
   // Memoized modal handlers
   const handleOpenReceiptSettings = useCallback(() => {
     setIsReceiptSettingsOpen(true);
@@ -778,6 +789,7 @@ function Printers() {
           <PrintersHeader
             onOpenReceiptSettings={handleOpenReceiptSettings}
             onOpenPrinterForm={handleOpenAddForm}
+            onTestArabicReceipt={testArabicReceipt}
             isFormOpen={isFormOpen}
           />
 

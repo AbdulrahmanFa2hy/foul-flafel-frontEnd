@@ -391,10 +391,10 @@ class PrintingService {
     const hasArabic = this.checkForArabicContent(orderData, receiptSettings);
 
     if (hasArabic) {
-      // IMPROVED: Set proper Arabic support with multiple fallbacks
-      commands += this.commands.SET_CODEPAGE_1256; // Windows-1256 is most reliable
+      // IMPROVED: Set proper Arabic support using IBM864 (most compatible)
+      commands += this.commands.SET_CODEPAGE_864; // IBM864 for Arabic thermal printers
       commands += this.commands.SET_CHARSET_ARABIC;
-      console.log("Arabic support enabled for receipt");
+      console.log("Arabic support enabled for receipt using IBM864");
     }
 
     // Business name with proper Arabic handling
@@ -1335,6 +1335,305 @@ MIIC...demo certificate content...
         "Enable 'Support Arabic Text' option in printer settings for Arabic content",
       ],
     };
+  }
+
+  // NEW: Complete Arabic Receipt Example with QZ Tray Integration
+  async printArabicReceiptExample() {
+    try {
+      // Sample Arabic receipt data
+      const arabicReceiptData = {
+        // Arabic store information
+        storeName: "مطعم الفول والفلافل", // Foul & Falafel Restaurant
+        storeAddress: "شارع الملك فهد، الرياض", // King Fahd Street, Riyadh
+        storePhone: "٠١١-٤٥٦-٧٨٩٠", // 011-456-7890
+        taxNumber: "٣٠٠-٤٥٦-٧٨٩", // 300-456-789
+
+        // Order details in Arabic
+        orderNumber: "رقم الطلب: ١٢٣٤٥", // Order Number: 12345
+        cashierName: "أحمد محمد", // Ahmed Mohammed
+        customerName: "سارة أحمد", // Sarah Ahmed
+        customerPhone: "٠٥٠-١٢٣-٤٥٦٧", // 050-123-4567
+
+        // Items in Arabic
+        items: [
+          {
+            name: "فول مدمس", // Foul Medammes
+            quantity: 2,
+            price: 15.5,
+            total: 31.0,
+          },
+          {
+            name: "فلافل مع الطحينة", // Falafel with Tahini
+            quantity: 1,
+            price: 12.0,
+            total: 12.0,
+          },
+          {
+            name: "حمص بالطحينة", // Hummus with Tahini
+            quantity: 1,
+            price: 8.5,
+            total: 8.5,
+          },
+          {
+            name: "خبز عربي", // Arabic Bread
+            quantity: 3,
+            price: 2.0,
+            total: 6.0,
+          },
+        ],
+
+        // Totals in Arabic
+        subtotal: 57.5,
+        tax: 8.63, // 15% tax
+        total: 66.13,
+        paymentMethod: "نقداً", // Cash
+        amountPaid: 70.0,
+        change: 3.87,
+
+        // Footer messages in Arabic
+        thankYouMessage: "شكراً لزيارتكم", // Thank you for your visit
+        returnMessage: "يرجى الاحتفاظ بالإيصال", // Please keep the receipt
+        websiteUrl: "www.foul-flafel.com",
+      };
+
+      // Get Arabic-enabled printer
+      const printer = this.getDefaultPrinter("customer");
+      if (!printer) {
+        throw new Error("No Arabic-capable printer configured");
+      }
+
+      // Generate Arabic receipt commands
+      const commands = this.generateArabicReceiptCommands(arabicReceiptData);
+
+      // Print using QZ Tray with proper encoding
+      const result = await this.sendArabicReceiptToQZTray(printer, commands);
+
+      console.log("Arabic receipt printed successfully:", result);
+      return result;
+    } catch (error) {
+      console.error("Failed to print Arabic receipt:", error);
+      throw error;
+    }
+  }
+
+  // NEW: Generate Arabic Receipt Commands with proper IBM864 encoding
+  generateArabicReceiptCommands(receiptData) {
+    const paperWidth = 48;
+    const now = new Date();
+
+    let commands = this.commands.INIT;
+
+    // Set IBM864 codepage for Arabic support
+    commands += this.commands.SET_CODEPAGE_864; // IBM864 for Arabic
+    commands += this.commands.SET_CHARSET_ARABIC;
+
+    // Header - Store Name (centered, large)
+    commands += this.commands.ALIGN_CENTER;
+    commands += this.commands.BOLD_ON;
+    commands += this.commands.DOUBLE_HEIGHT_ON;
+    commands += this.prepareArabicText(receiptData.storeName) + this.CTL_LF;
+    commands += this.commands.DOUBLE_HEIGHT_OFF;
+    commands += this.commands.BOLD_OFF;
+
+    // Store Address (centered)
+    commands += this.prepareArabicText(receiptData.storeAddress) + this.CTL_LF;
+
+    // Store Phone (centered)
+    commands += receiptData.storePhone + this.CTL_LF;
+
+    // Tax Number (centered)
+    commands += "الرقم الضريبي: " + receiptData.taxNumber + this.CTL_LF;
+    commands += this.commands.ALIGN_LEFT;
+    commands += this.CTL_LF;
+
+    // Date and Time (right-aligned for Arabic)
+    commands += this.commands.ALIGN_RIGHT;
+    const arabicDate = this.formatArabicDate(now);
+    const arabicTime = this.formatArabicTime(now);
+    commands += arabicDate + " " + arabicTime + this.CTL_LF;
+    commands += this.commands.ALIGN_LEFT;
+
+    // Order Number and Cashier
+    commands += receiptData.orderNumber + this.CTL_LF;
+    commands +=
+      "الكاشير: " +
+      this.prepareArabicText(receiptData.cashierName) +
+      this.CTL_LF;
+
+    // Customer Information
+    if (receiptData.customerName) {
+      commands += this.CTL_LF;
+      commands += "بيانات العميل:" + this.CTL_LF; // Customer Data
+      commands += "-".repeat(paperWidth) + this.CTL_LF;
+      commands +=
+        "الاسم: " +
+        this.prepareArabicText(receiptData.customerName) +
+        this.CTL_LF;
+      commands += "الهاتف: " + receiptData.customerPhone + this.CTL_LF;
+    }
+
+    commands += this.CTL_LF;
+    commands += "=".repeat(paperWidth) + this.CTL_LF;
+    commands += "تفاصيل الطلب:" + this.CTL_LF; // Order Details
+    commands += "=".repeat(paperWidth) + this.CTL_LF;
+
+    // Items - Right-aligned for Arabic
+    receiptData.items.forEach((item, index) => {
+      // Item name (right-aligned)
+      commands += this.commands.ALIGN_RIGHT;
+      commands += this.prepareArabicText(item.name) + this.CTL_LF;
+
+      // Quantity, price, total (left-aligned for numbers)
+      commands += this.commands.ALIGN_LEFT;
+      const qtyLine = `${item.quantity} × ${item.price.toFixed(
+        2
+      )} = ${item.total.toFixed(2)} ريال`;
+      commands += qtyLine + this.CTL_LF;
+
+      if (index < receiptData.items.length - 1) {
+        commands += this.CTL_LF;
+      }
+    });
+
+    commands += "-".repeat(paperWidth) + this.CTL_LF;
+
+    // Totals (right-aligned for Arabic labels, left for numbers)
+    commands += this.commands.ALIGN_RIGHT;
+    commands += "المجموع الفرعي:" + this.CTL_LF;
+    commands += this.commands.ALIGN_LEFT;
+    commands += receiptData.subtotal.toFixed(2) + " ريال" + this.CTL_LF;
+
+    commands += this.commands.ALIGN_RIGHT;
+    commands += "الضريبة (١٥٪):" + this.CTL_LF; // Tax (15%)
+    commands += this.commands.ALIGN_LEFT;
+    commands += receiptData.tax.toFixed(2) + " ريال" + this.CTL_LF;
+
+    commands += "=".repeat(paperWidth) + this.CTL_LF;
+
+    // Total (bold, large)
+    commands += this.commands.BOLD_ON;
+    commands += this.commands.DOUBLE_HEIGHT_ON;
+    commands += this.commands.ALIGN_RIGHT;
+    commands += "المجموع الكلي:" + this.CTL_LF; // Total Amount
+    commands += this.commands.ALIGN_LEFT;
+    commands += receiptData.total.toFixed(2) + " ريال" + this.CTL_LF;
+    commands += this.commands.DOUBLE_HEIGHT_OFF;
+    commands += this.commands.BOLD_OFF;
+
+    commands += "=".repeat(paperWidth) + this.CTL_LF;
+
+    // Payment Information
+    commands += this.commands.ALIGN_RIGHT;
+    commands += "طريقة الدفع: " + receiptData.paymentMethod + this.CTL_LF; // Payment Method
+    commands +=
+      "المبلغ المدفوع: " +
+      receiptData.amountPaid.toFixed(2) +
+      " ريال" +
+      this.CTL_LF;
+    commands +=
+      "الباقي: " + receiptData.change.toFixed(2) + " ريال" + this.CTL_LF;
+
+    commands += this.CTL_LF;
+
+    // Footer Messages (centered)
+    commands += this.commands.ALIGN_CENTER;
+    commands += this.commands.BOLD_ON;
+    commands +=
+      this.prepareArabicText(receiptData.thankYouMessage) + this.CTL_LF;
+    commands += this.commands.BOLD_OFF;
+    commands += this.prepareArabicText(receiptData.returnMessage) + this.CTL_LF;
+    commands += this.CTL_LF;
+    commands += receiptData.websiteUrl + this.CTL_LF;
+
+    // Reset alignment and character set
+    commands += this.commands.ALIGN_LEFT;
+    commands += this.commands.RESET_CHARSET;
+
+    // Final spacing and cut
+    commands += this.CTL_LF + this.CTL_LF + this.CTL_LF;
+    commands += this.commands.CUT_PAPER;
+
+    return commands;
+  }
+
+  // NEW: Send Arabic receipt to QZ Tray with proper IBM864 encoding
+  async sendArabicReceiptToQZTray(printerConfig, commands) {
+    try {
+      if (!this.isQZConnected) {
+        await this.checkQZConnection();
+      }
+
+      if (!this.isQZConnected || !window.qz) {
+        throw new Error(
+          "QZ Tray is not connected. Please ensure QZ Tray is running."
+        );
+      }
+
+      // Create QZ Tray configuration with IBM864 encoding
+      const config = window.qz.configs.create(
+        printerConfig.name || printerConfig.qzPrinterName,
+        {
+          encoding: "IBM864", // Critical: Use IBM864 for Arabic
+          endOfDoc: "\n", // Proper document separation
+        }
+      );
+
+      // Prepare data for QZ Tray
+      const printData = [
+        {
+          type: "raw",
+          format: "plain",
+          data: commands,
+        },
+      ];
+
+      // Print using QZ Tray
+      await window.qz.print(config, printData);
+
+      return {
+        success: true,
+        message:
+          "Arabic receipt printed successfully via QZ Tray with IBM864 encoding",
+        encoding: "IBM864",
+        printer: printerConfig.name,
+      };
+    } catch (error) {
+      console.error("QZ Tray Arabic printing failed:", error);
+      throw new Error(`QZ Tray Arabic printing failed: ${error.message}`);
+    }
+  }
+
+  // NEW: Format Arabic date
+  formatArabicDate(date) {
+    const arabicNumerals = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+    const day = date
+      .getDate()
+      .toString()
+      .replace(/\d/g, (d) => arabicNumerals[d]);
+    const month = (date.getMonth() + 1)
+      .toString()
+      .replace(/\d/g, (d) => arabicNumerals[d]);
+    const year = date
+      .getFullYear()
+      .toString()
+      .replace(/\d/g, (d) => arabicNumerals[d]);
+    return `${day}/${month}/${year}`;
+  }
+
+  // NEW: Format Arabic time
+  formatArabicTime(date) {
+    const arabicNumerals = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+    const hours = date
+      .getHours()
+      .toString()
+      .padStart(2, "0")
+      .replace(/\d/g, (d) => arabicNumerals[d]);
+    const minutes = date
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")
+      .replace(/\d/g, (d) => arabicNumerals[d]);
+    return `${hours}:${minutes}`;
   }
 }
 

@@ -3,15 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arabic Thermal Printer Test - Enhanced</title>
+    <title>Arabic Thermal Printer Test - Complete QZ Tray Integration</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
         padding: 20px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: #333;
+        line-height: 1.6;
       }
 
       .container {
@@ -19,562 +20,646 @@
         border-radius: 15px;
         padding: 30px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
       }
 
       h1 {
         color: #2c3e50;
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 10px;
         font-size: 2.5em;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+        font-size: 1.2em;
       }
 
       .status {
         padding: 15px;
         border-radius: 8px;
-        margin: 15px 0;
+        margin-bottom: 20px;
         font-weight: bold;
         text-align: center;
       }
 
       .status.success {
-        background: #d4edda;
+        background-color: #d4edda;
         color: #155724;
         border: 1px solid #c3e6cb;
       }
+
       .status.error {
-        background: #f8d7da;
+        background-color: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
       }
-      .status.info {
-        background: #cce7ff;
-        color: #004085;
-        border: 1px solid #abd8ff;
+
+      .status.warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
       }
 
-      .section {
-        margin: 25px 0;
-        padding: 20px;
-        border: 2px solid #e9ecef;
-        border-radius: 10px;
-        background: #f8f9fa;
-      }
-
-      .section h2 {
-        color: #495057;
-        margin-bottom: 15px;
-        font-size: 1.4em;
-      }
-
-      .test-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
-      }
-
-      button {
-        padding: 12px 20px;
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        margin: 8px;
         border: none;
         border-radius: 8px;
-        font-size: 14px;
-        font-weight: bold;
         cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
         transition: all 0.3s ease;
+        min-width: 200px;
+      }
+
+      .btn-primary {
         background: linear-gradient(45deg, #3498db, #2980b9);
         color: white;
       }
 
-      button:hover {
+      .btn-primary:hover {
+        background: linear-gradient(45deg, #2980b9, #3498db);
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
       }
 
-      button:active {
-        transform: translateY(0);
-      }
-
-      button.test {
-        background: linear-gradient(45deg, #27ae60, #229954);
-      }
-      button.preview {
-        background: linear-gradient(45deg, #f39c12, #e67e22);
-      }
-      button.advanced {
-        background: linear-gradient(45deg, #9b59b6, #8e44ad);
-      }
-
-      .arabic-text {
-        font-size: 18px;
-        line-height: 1.6;
-        direction: rtl;
-        text-align: right;
-        padding: 15px;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin: 10px 0;
-        font-family: "Arial Unicode MS", "Tahoma", sans-serif;
-      }
-
-      .mixed-text {
-        direction: ltr;
-        text-align: left;
-      }
-
-      .code-display {
-        background: #2c3e50;
-        color: #ecf0f1;
-        padding: 15px;
-        border-radius: 5px;
-        font-family: "Courier New", monospace;
-        font-size: 12px;
-        margin: 10px 0;
-        white-space: pre-wrap;
-        word-break: break-all;
-      }
-
-      .improvements {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      .btn-success {
+        background: linear-gradient(45deg, #27ae60, #2ecc71);
         color: white;
-        padding: 20px;
-        border-radius: 10px;
+      }
+
+      .btn-success:hover {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+      }
+
+      .btn-warning {
+        background: linear-gradient(45deg, #f39c12, #e67e22);
+        color: white;
+      }
+
+      .btn-warning:hover {
+        background: linear-gradient(45deg, #e67e22, #f39c12);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
         margin: 20px 0;
       }
 
-      .improvements h3 {
+      .card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        border-left: 4px solid #3498db;
+      }
+
+      .card h3 {
+        color: #2c3e50;
         margin-top: 0;
       }
 
-      .improvements ul {
-        margin: 0;
-        padding-left: 20px;
+      .arabic-text {
+        direction: rtl;
+        text-align: right;
+        font-size: 18px;
+        line-height: 1.8;
+        background: #f1f2f6;
+        padding: 15px;
+        border-radius: 8px;
+        border-right: 4px solid #00a8ff;
+        margin: 10px 0;
       }
 
-      .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        overflow-x: auto;
+        margin: 15px 0;
       }
 
-      @media (max-width: 768px) {
-        .grid-2 {
-          grid-template-columns: 1fr;
-        }
+      .highlight {
+        background: #e74c3c;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 15px 0;
+      }
+
+      .feature {
+        background: #27ae60;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .logs {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin: 15px 0;
+      }
+
+      .receipt-preview {
+        background: #f8f9fa;
+        border: 2px dashed #bdc3c7;
+        border-radius: 8px;
+        padding: 20px;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        white-space: pre-line;
+        direction: rtl;
+        text-align: right;
+        max-height: 500px;
+        overflow-y: auto;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>🖨️ Enhanced Arabic Thermal Printer Test</h1>
+      <h1>🇸🇦 Arabic Thermal Printer Test</h1>
+      <p class="subtitle">
+        Complete QZ Tray Integration with IBM864 Encoding & RTL Support
+      </p>
 
-      <div class="status info">
-        <h3>✅ COMPREHENSIVE SOLUTION IMPLEMENTED</h3>
-        <p>
-          Based on extensive research and best practices for Arabic text
-          printing on thermal printers
-        </p>
+      <div id="status" class="status warning">
+        Initializing QZ Tray connection...
       </div>
 
-      <div class="improvements">
-        <h3>🔧 Latest Improvements Applied:</h3>
-        <ul>
-          <li>
-            <strong>Corrected ESC/POS Commands:</strong> Fixed codepage
-            selection (CP1256, CP864, CP720)
-          </li>
-          <li>
-            <strong>Proper Character Mapping:</strong> Added Windows-1256
-            character mapping for Arabic
-          </li>
-          <li>
-            <strong>RTL Text Handling:</strong> Implemented Right-to-Left text
-            processing
-          </li>
-          <li>
-            <strong>Unicode Normalization:</strong> NFC normalization for
-            consistent character representation
-          </li>
-          <li>
-            <strong>Multi-Codepage Support:</strong> Fallback mechanisms for
-            different thermal printer models
-          </li>
-          <li>
-            <strong>Character Joining:</strong> Maintains Arabic character
-            cursive joining
-          </li>
-          <li>
-            <strong>Mixed Language Support:</strong> Handles Arabic + English
-            content properly
-          </li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h2>📝 Arabic Text Samples for Testing</h2>
-
-        <div class="grid-2">
-          <div>
-            <h4>Business Names (Arabic):</h4>
-            <div class="arabic-text">مطعم الفول والفلافل</div>
-            <div class="arabic-text">مطعم الشاورما اللذيذة</div>
-            <div class="arabic-text">كافيتيريا النور</div>
-          </div>
-
-          <div>
-            <h4>Customer Data (Arabic):</h4>
-            <div class="arabic-text">أحمد محمد علي</div>
-            <div class="arabic-text">شارع الملك فهد، الرياض</div>
-            <div class="arabic-text">مرحبا بكم في مطعمنا</div>
-          </div>
+      <div class="grid">
+        <div class="card">
+          <h3>🖨️ QZ Tray Controls</h3>
+          <button class="btn btn-primary" onclick="connectQZ()">
+            Connect to QZ Tray
+          </button>
+          <button class="btn btn-primary" onclick="findPrinters()">
+            Find Printers
+          </button>
+          <button class="btn btn-warning" onclick="checkQZStatus()">
+            Check Status
+          </button>
         </div>
 
-        <h4>Mixed Language (Arabic + English):</h4>
-        <div class="mixed-text arabic-text">
-          Welcome مرحبا - فول Foul - فلافل Falafel<br />
-          Customer: أحمد احمد - Phone: 0501234567<br />
-          Address: شارع الملك فهد، الرياض Saudi Arabia
-        </div>
-
-        <h4>Menu Items (Arabic):</h4>
-        <div class="arabic-text">
-          ١. فول مدمس - ١٥ ريال<br />
-          ٢. فلافل - ١٠ ريال<br />
-          ٣. حمص - ١٢ ريال<br />
-          ٤. شاورما لحم - ٢٠ ريال<br />
-          ٥. عصير برتقال طازج - ٨ ريال
-        </div>
-      </div>
-
-      <div class="section">
-        <h2>🧪 Comprehensive Test Functions</h2>
-
-        <div class="test-buttons">
-          <button class="test" onclick="testBasicArabic()">
-            Test Basic Arabic Print
+        <div class="card">
+          <h3>📄 Arabic Receipt Tests</h3>
+          <button class="btn btn-success" onclick="printFullArabicReceipt()">
+            Print Complete Arabic Receipt
           </button>
-          <button class="test" onclick="testMixedLanguage()">
-            Test Mixed Language
+          <button class="btn btn-success" onclick="printSimpleArabicTest()">
+            Print Simple Arabic Test
           </button>
-          <button class="test" onclick="testCompleteReceipt()">
-            Test Complete Receipt
-          </button>
-          <button class="test" onclick="testCharacterMapping()">
-            Test Character Mapping
-          </button>
-          <button class="preview" onclick="previewArabicReceipt()">
+          <button class="btn btn-success" onclick="previewArabicReceipt()">
             Preview Arabic Receipt
           </button>
-          <button class="advanced" onclick="testAdvancedFeatures()">
-            Test Advanced Features
-          </button>
         </div>
       </div>
 
-      <div class="section">
-        <h2>🔍 Technical Implementation Details</h2>
-
-        <h4>New ESC/POS Commands Used:</h4>
-        <div class="code-display">
-          SET_CODEPAGE_1256: "\x1B\x74\x32" // Windows-1256 (Most Reliable)
-          SET_CODEPAGE_864: "\x1B\x74\x25" // CP864 (Alternative)
-          SET_CODEPAGE_720: "\x1B\x74\x20" // CP720 (Backup) SET_CHARSET_ARABIC:
-          "\x1B\x52\x11" // Arabic Character Set (17) RESET_CHARSET:
-          "\x1B\x52\x00" // Reset to Default Character Mapping Sample: 'ا':
-          '\xC7', 'ب': '\xC8', 'ت': '\xCA', 'ث': '\xCB' 'ج': '\xCC', 'ح':
-          '\xCD', 'خ': '\xCE', 'د': '\xCF' 'ر': '\xD1', 'س': '\xD3', 'ش':
-          '\xD4', 'ص': '\xD5'
-        </div>
-
-        <h4>Text Processing Pipeline:</h4>
-        <div class="code-display">
-          1. Detect Arabic Content → containsArabic() 2. Clean Unicode Marks →
-          Remove \u200C-\u200F, \u202A-\u202E 3. Normalize Unicode → NFC
-          normalization 4. Handle RTL Layout → Reverse word order for Arabic 5.
-          Apply Character Mapping → CP1256 mapping 6. Set Printer Codepage →
-          Multiple fallbacks 7. Send to Thermal Printer → QZ Tray / USB /
-          Network
+      <div class="card">
+        <h3>✨ Features Implemented</h3>
+        <div class="features">
+          <span class="feature">IBM864 Encoding</span>
+          <span class="feature">RTL Text Direction</span>
+          <span class="feature">Arabic Numerals</span>
+          <span class="feature">QZ Tray Integration</span>
+          <span class="feature">ESC/POS Commands</span>
+          <span class="feature">Proper Alignment</span>
+          <span class="feature">Mixed Content</span>
+          <span class="feature">Receipt Structure</span>
         </div>
       </div>
 
-      <div class="section">
-        <h2>📊 Test Results</h2>
-        <div id="testResults"></div>
+      <div class="card">
+        <h3>🔧 Technical Implementation</h3>
+        <div class="code-block">
+          // QZ Tray Configuration for Arabic Printing var config =
+          qz.configs.create("Printer Name", { encoding: 'IBM864' // Critical for
+          Arabic support }); // ESC/POS Commands for Arabic var data = [
+          '\x1B\x40', // Initialize printer '\x1B\x74\x25', // Set IBM864
+          codepage '\x1B\x52\x11', // Set Arabic character set '\x1B\x61\x02',
+          // Right align for Arabic text 'مطعم الفول والفلافل', // Arabic text
+          '\x0A', // Line feed '\x1B\x61\x00', // Left align for numbers '57.50
+          ريال', // Price with Arabic currency '\x1B\x69' // Cut paper ];
+          qz.print(config, data);
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📝 Sample Arabic Content</h3>
+        <div class="arabic-text">
+          مطعم الفول والفلافل<br />
+          شارع الملك فهد، الرياض<br />
+          الهاتف: ٠١١-٤٥٦-٧٨٩٠<br />
+          الرقم الضريبي: ٣٠٠-٤٥٦-٧٨٩<br /><br />
+
+          رقم الطلب: ١٢٣٤٥<br />
+          الكاشير: أحمد محمد<br /><br />
+
+          تفاصيل الطلب:<br />
+          فول مدمس ٢ × ١٥.٥٠ = ٣١.٠٠ ريال<br />
+          فلافل مع الطحينة ١ × ١٢.٠٠ = ١٢.٠٠ ريال<br /><br />
+
+          المجموع الكلي: ٦٦.١٣ ريال<br />
+          شكراً لزيارتكم
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>�� Receipt Preview</h3>
+        <div id="receiptPreview" class="receipt-preview">
+          Click "Preview Arabic Receipt" to see the formatted receipt...
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📋 System Logs</h3>
+        <div id="logs" class="logs">
+          System initialized. Ready for Arabic printing tests...
+        </div>
       </div>
     </div>
 
+    <!-- QZ Tray Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+
     <script>
-      // Test results container
-      const resultsContainer = document.getElementById("testResults");
+      let qzConnected = false;
+      let selectedPrinter = null;
 
-      function logResult(test, status, message) {
-        const result = document.createElement("div");
-        result.className = `status ${status}`;
-        result.innerHTML = `<strong>${test}:</strong> ${message}`;
-        resultsContainer.appendChild(result);
-
-        // Auto-scroll to results
-        result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      // Logging function
+      function log(message, type = "info") {
+        const logs = document.getElementById("logs");
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+        logs.textContent += logEntry;
+        logs.scrollTop = logs.scrollHeight;
+        console.log(logEntry);
       }
 
-      // Check if printing service is available
-      function checkPrintingService() {
-        if (typeof window.printingService === "undefined") {
-          logResult(
-            "Service Check",
-            "error",
-            "Printing service not found. Please ensure the application is running."
-          );
-          return false;
-        }
-        logResult(
-          "Service Check",
-          "success",
-          "Printing service detected successfully."
-        );
-        return true;
+      // Update status
+      function updateStatus(message, type) {
+        const status = document.getElementById("status");
+        status.textContent = message;
+        status.className = `status ${type}`;
       }
 
-      // Test basic Arabic printing
-      async function testBasicArabic() {
-        if (!checkPrintingService()) return;
-
-        const arabicText = "مرحبا بكم في مطعم الفول والفلافل";
-
+      // Connect to QZ Tray
+      async function connectQZ() {
         try {
-          // Create test order data with Arabic content
-          const testOrder = {
-            orderNumber: "TEST-001",
-            cashier: "أحمد محمد",
-            custName: arabicText,
-            orderItems: [
-              { name: "فول مدمس", quantity: 1, price: 15.0 },
-              { name: "فلافل", quantity: 2, price: 10.0 },
-            ],
-          };
+          log("Attempting to connect to QZ Tray...");
+          await qz.websocket.connect();
+          qzConnected = true;
+          updateStatus("✅ Connected to QZ Tray successfully!", "success");
+          log("QZ Tray connected successfully");
 
-          await window.printingService.printCustomerReceipt(testOrder);
-          logResult(
-            "Basic Arabic Test",
-            "success",
-            `Arabic text sent to printer: ${arabicText}`
-          );
+          // Auto-find printers after connection
+          await findPrinters();
         } catch (error) {
-          logResult("Basic Arabic Test", "error", `Failed: ${error.message}`);
+          qzConnected = false;
+          updateStatus(
+            "❌ Failed to connect to QZ Tray. Make sure it's running.",
+            "error"
+          );
+          log(`Connection failed: ${error.message}`, "error");
         }
       }
 
-      // Test mixed language printing
-      async function testMixedLanguage() {
-        if (!checkPrintingService()) return;
-
-        try {
-          const testOrder = {
-            orderNumber: "MIX-002",
-            cashier: "Ahmed أحمد",
-            custName: "محمد علي Mohammed Ali",
-            custAddress: "شارع الملك فهد، الرياض King Fahd Street, Riyadh",
-            orderItems: [
-              { name: "Foul فول مدمس", quantity: 1, price: 15.0 },
-              { name: "Falafel فلافل", quantity: 3, price: 10.0 },
-              { name: "Orange Juice عصير برتقال", quantity: 1, price: 8.0 },
-            ],
-          };
-
-          await window.printingService.printCustomerReceipt(testOrder);
-          logResult(
-            "Mixed Language Test",
-            "success",
-            "Mixed Arabic/English content sent to printer"
-          );
-        } catch (error) {
-          logResult("Mixed Language Test", "error", `Failed: ${error.message}`);
+      // Find available printers
+      async function findPrinters() {
+        if (!qzConnected) {
+          updateStatus("⚠️ Please connect to QZ Tray first", "warning");
+          return;
         }
-      }
-
-      // Test complete receipt with full Arabic content
-      async function testCompleteReceipt() {
-        if (!checkPrintingService()) return;
 
         try {
-          // Set Arabic receipt settings
-          const arabicSettings = {
-            header: {
-              businessName: "مطعم الفول والفلافل الشعبي",
-              address: "شارع الملك فهد، حي النور",
-              city: "الرياض، المملكة العربية السعودية",
-              phone: "٠١١-٤٥٦-٧٨٩٠",
-              taxId: "رقم ضريبي: ١٢٣٤٥٦٧٨٩",
-            },
-            footer: {
-              thankYouMessage: "شكرا لزيارتكم - نتطلع لخدمتكم مرة أخرى",
-            },
-            display: {
-              showCashierName: true,
-            },
-          };
+          log("Searching for available printers...");
+          const printers = await qz.printers.find();
 
-          window.printingService.saveReceiptSettings(arabicSettings);
-
-          const testOrder = {
-            orderNumber: "AR-003",
-            cashier: "عبدالله أحمد الخليفي",
-            custName: "سالم محمد العتيبي",
-            custPhone: "٠٥٠١٢٣٤٥٦٧",
-            custAddress: "حي الروضة، شارع الأمير سلطان، الرياض",
-            orderItems: [
-              { name: "فول مدمس بالطحينة والسلطة", quantity: 2, price: 18.0 },
-              { name: "فلافل مع الخضار والصلصة", quantity: 3, price: 12.0 },
-              { name: "حمص بالطحينة", quantity: 1, price: 15.0 },
-              { name: "شاي بالنعناع", quantity: 2, price: 5.0 },
-              { name: "عصير برتقال طازج", quantity: 1, price: 10.0 },
-            ],
-            paymentMethod: "نقداً",
-          };
-
-          await window.printingService.printCustomerReceipt(testOrder);
-          logResult(
-            "Complete Arabic Receipt",
-            "success",
-            "Full Arabic receipt with business info sent to printer"
-          );
-        } catch (error) {
-          logResult(
-            "Complete Arabic Receipt",
-            "error",
-            `Failed: ${error.message}`
-          );
-        }
-      }
-
-      // Test character mapping functionality
-      async function testCharacterMapping() {
-        if (!checkPrintingService()) return;
-
-        try {
-          // Test specific Arabic characters that commonly cause problems
-          const problematicChars = [
-            "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي",
-            "٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩", // Arabic numerals
-            "، ؛ ؟", // Arabic punctuation
-            "لا بسم الله الرحمن الرحيم", // Common phrases
-          ];
-
-          const testOrder = {
-            orderNumber: "CHAR-004",
-            cashier: "Character Test اختبار الحروف",
-            custName: "اختبار تشكيل الحروف العربية",
-            orderItems: problematicChars.map((chars, index) => ({
-              name: chars,
-              quantity: 1,
-              price: index + 1,
-            })),
-          };
-
-          await window.printingService.printCustomerReceipt(testOrder);
-          logResult(
-            "Character Mapping Test",
-            "success",
-            "Arabic character mapping test sent to printer"
-          );
-        } catch (error) {
-          logResult(
-            "Character Mapping Test",
-            "error",
-            `Failed: ${error.message}`
-          );
-        }
-      }
-
-      // Preview Arabic receipt in browser
-      function previewArabicReceipt() {
-        if (!checkPrintingService()) return;
-
-        try {
-          const testOrder = {
-            orderNumber: "PREV-005",
-            cashier: "معاينة الإيصال",
-            custName: "محمد أحمد العربي",
-            custAddress: "شارع الملك عبدالعزيز، الرياض",
-            orderItems: [
-              { name: "فول مدمس", quantity: 1, price: 15.0 },
-              { name: "فلافل", quantity: 2, price: 10.0 },
-              { name: "عصير طازج", quantity: 1, price: 8.0 },
-            ],
-          };
-
-          const receiptContent =
-            window.printingService.generateCustomerReceipt(testOrder);
-          window.printingService.previewReceipt(receiptContent);
-          logResult(
-            "Receipt Preview",
-            "success",
-            "Arabic receipt preview opened in new window"
-          );
-        } catch (error) {
-          logResult("Receipt Preview", "error", `Failed: ${error.message}`);
-        }
-      }
-
-      // Test advanced features
-      async function testAdvancedFeatures() {
-        if (!checkPrintingService()) return;
-
-        try {
-          // Test QZ Tray status with Arabic support
-          const qzStatus = await window.printingService.getQZStatus();
-          logResult(
-            "QZ Tray Status",
-            qzStatus.connected ? "success" : "error",
-            `QZ Tray: ${qzStatus.connected ? "Connected" : "Disconnected"}`
-          );
-
-          // Test printer detection
-          const printers = await window.printingService.getAvailablePrinters();
-          logResult(
-            "Printer Detection",
-            printers.length > 0 ? "success" : "error",
-            `Found ${printers.length} printers`
-          );
-
-          // Test Arabic content detection
-          const arabicTexts = [
-            "مرحبا", // Should return true
-            "Hello", // Should return false
-            "Hello مرحبا", // Should return true
-          ];
-
-          arabicTexts.forEach((text) => {
-            const hasArabic = window.printingService.containsArabic(text);
-            logResult(
-              "Arabic Detection",
-              "info",
-              `"${text}" contains Arabic: ${hasArabic}`
+          if (printers.length > 0) {
+            selectedPrinter = printers[0]; // Select first printer
+            log(`Found ${printers.length} printer(s):`);
+            printers.forEach((printer, index) => {
+              log(`  ${index + 1}. ${printer}`);
+            });
+            log(`Selected printer: ${selectedPrinter}`);
+            updateStatus(
+              `🖨️ Found ${printers.length} printer(s). Selected: ${selectedPrinter}`,
+              "success"
             );
+          } else {
+            updateStatus(
+              "⚠️ No printers found. Please check printer connections.",
+              "warning"
+            );
+            log("No printers found", "warning");
+          }
+        } catch (error) {
+          updateStatus("❌ Error finding printers", "error");
+          log(`Error finding printers: ${error.message}`, "error");
+        }
+      }
+
+      // Check QZ Tray status
+      async function checkQZStatus() {
+        try {
+          if (qz.websocket.isActive()) {
+            const version = await qz.websocket.getVersion();
+            updateStatus(
+              `✅ QZ Tray ${version} is active and ready`,
+              "success"
+            );
+            log(`QZ Tray version: ${version}`);
+          } else {
+            updateStatus("❌ QZ Tray is not active", "error");
+            log("QZ Tray is not active", "error");
+          }
+        } catch (error) {
+          updateStatus("❌ Error checking QZ Tray status", "error");
+          log(`Status check failed: ${error.message}`, "error");
+        }
+      }
+
+      // Print complete Arabic receipt
+      async function printFullArabicReceipt() {
+        if (!qzConnected || !selectedPrinter) {
+          updateStatus(
+            "⚠️ Please connect to QZ Tray and select a printer first",
+            "warning"
+          );
+          return;
+        }
+
+        try {
+          log("Generating complete Arabic receipt...");
+
+          // Create QZ config with IBM864 encoding
+          const config = qz.configs.create(selectedPrinter, {
+            encoding: "IBM864",
+            endOfDoc: "\n",
           });
 
-          logResult(
-            "Advanced Features",
-            "success",
-            "All advanced feature tests completed"
-          );
+          // Generate complete Arabic receipt data
+          const receiptData = generateArabicReceiptCommands();
+
+          const printData = [
+            {
+              type: "raw",
+              format: "plain",
+              data: receiptData,
+            },
+          ];
+
+          log("Sending Arabic receipt to printer...");
+          await qz.print(config, printData);
+
+          updateStatus("✅ Arabic receipt printed successfully!", "success");
+          log("Arabic receipt printed successfully with IBM864 encoding");
         } catch (error) {
-          logResult("Advanced Features", "error", `Failed: ${error.message}`);
+          updateStatus("❌ Failed to print Arabic receipt", "error");
+          log(`Print failed: ${error.message}`, "error");
         }
       }
 
-      // Initialize page
-      document.addEventListener("DOMContentLoaded", function () {
-        logResult(
-          "Page Load",
-          "info",
-          "Arabic printing test page loaded successfully"
-        );
+      // Print simple Arabic test
+      async function printSimpleArabicTest() {
+        if (!qzConnected || !selectedPrinter) {
+          updateStatus(
+            "⚠️ Please connect to QZ Tray and select a printer first",
+            "warning"
+          );
+          return;
+        }
 
-        // Check for printing service availability
-        setTimeout(checkPrintingService, 1000);
-      });
+        try {
+          log("Printing simple Arabic test...");
+
+          const config = qz.configs.create(selectedPrinter, {
+            encoding: "IBM864",
+          });
+
+          const testData = [
+            "\x1B\x40", // Initialize
+            "\x1B\x74\x25", // Set IBM864 codepage
+            "\x1B\x52\x11", // Set Arabic character set
+            "\x1B\x61\x01", // Center align
+            "\x1B\x45\x01", // Bold on
+            "اختبار الطباعة العربية\n", // Arabic Test Print
+            "\x1B\x45\x00", // Bold off
+            "\x1B\x61\x02", // Right align
+            "مطعم الفول والفلافل\n", // Restaurant name
+            "الرياض، المملكة العربية السعودية\n", // Riyadh, Saudi Arabia
+            "\x1B\x61\x00", // Left align
+            "Test completed successfully!\n",
+            "\n\n\n",
+            "\x1B\x69", // Cut paper
+          ];
+
+          const printData = [
+            {
+              type: "raw",
+              format: "plain",
+              data: testData.join(""),
+            },
+          ];
+
+          await qz.print(config, printData);
+          updateStatus("✅ Simple Arabic test printed!", "success");
+          log("Simple Arabic test completed successfully");
+        } catch (error) {
+          updateStatus("❌ Simple Arabic test failed", "error");
+          log(`Simple test failed: ${error.message}`, "error");
+        }
+      }
+
+      // Preview Arabic receipt
+      function previewArabicReceipt() {
+        log("Generating Arabic receipt preview...");
+
+        const receiptCommands = generateArabicReceiptCommands();
+        const preview = convertCommandsToPreview(receiptCommands);
+
+        document.getElementById("receiptPreview").textContent = preview;
+        updateStatus("📄 Arabic receipt preview generated", "success");
+        log("Receipt preview generated successfully");
+      }
+
+      // Generate Arabic receipt commands
+      function generateArabicReceiptCommands() {
+        const commands = [
+          "\x1B\x40", // Initialize printer
+          "\x1B\x74\x25", // Set IBM864 codepage
+          "\x1B\x52\x11", // Set Arabic character set
+
+          // Header
+          "\x1B\x61\x01", // Center align
+          "\x1B\x45\x01", // Bold on
+          "\x1B\x21\x10", // Double height
+          "مطعم الفول والفلافل\n", // Restaurant name
+          "\x1B\x21\x00", // Normal size
+          "\x1B\x45\x00", // Bold off
+
+          "شارع الملك فهد، الرياض\n", // Address
+          "الهاتف: ٠١١-٤٥٦-٧٨٩٠\n", // Phone
+          "الرقم الضريبي: ٣٠٠-٤٥٦-٧٨٩\n", // Tax number
+          "\x1B\x61\x00", // Left align
+          "\n",
+
+          // Date and order info
+          "\x1B\x61\x02", // Right align
+          "٢٠٢٤/١٢/٢٥ ١٤:٣٠\n", // Date and time
+          "\x1B\x61\x00", // Left align
+          "رقم الطلب: ١٢٣٤٥\n", // Order number
+          "الكاشير: أحمد محمد\n", // Cashier
+          "\n",
+
+          // Customer info
+          "بيانات العميل:\n", // Customer data
+          "--------------------------------\n",
+          "الاسم: سارة أحمد\n", // Name
+          "الهاتف: ٠٥٠-١٢٣-٤٥٦٧\n", // Phone
+          "\n",
+
+          // Items
+          "================================\n",
+          "تفاصيل الطلب:\n", // Order details
+          "================================\n",
+
+          "\x1B\x61\x02", // Right align for Arabic
+          "فول مدمس\n", // Item 1
+          "\x1B\x61\x00", // Left align for numbers
+          "2 × 15.50 = 31.00 ريال\n",
+          "\n",
+
+          "\x1B\x61\x02", // Right align
+          "فلافل مع الطحينة\n", // Item 2
+          "\x1B\x61\x00", // Left align
+          "1 × 12.00 = 12.00 ريال\n",
+          "\n",
+
+          "\x1B\x61\x02", // Right align
+          "حمص بالطحينة\n", // Item 3
+          "\x1B\x61\x00", // Left align
+          "1 × 8.50 = 8.50 ريال\n",
+          "\n",
+
+          "\x1B\x61\x02", // Right align
+          "خبز عربي\n", // Item 4
+          "\x1B\x61\x00", // Left align
+          "3 × 2.00 = 6.00 ريال\n",
+
+          "--------------------------------\n",
+
+          // Totals
+          "\x1B\x61\x02", // Right align
+          "المجموع الفرعي:\n", // Subtotal
+          "\x1B\x61\x00", // Left align
+          "57.50 ريال\n",
+
+          "\x1B\x61\x02", // Right align
+          "الضريبة (١٥٪):\n", // Tax
+          "\x1B\x61\x00", // Left align
+          "8.63 ريال\n",
+
+          "================================\n",
+
+          "\x1B\x45\x01", // Bold on
+          "\x1B\x21\x10", // Double height
+          "\x1B\x61\x02", // Right align
+          "المجموع الكلي:\n", // Total
+          "\x1B\x61\x00", // Left align
+          "66.13 ريال\n",
+          "\x1B\x21\x00", // Normal size
+          "\x1B\x45\x00", // Bold off
+
+          "================================\n",
+
+          // Payment
+          "\x1B\x61\x02", // Right align
+          "طريقة الدفع: نقداً\n", // Payment method
+          "المبلغ المدفوع: 70.00 ريال\n", // Amount paid
+          "الباقي: 3.87 ريال\n", // Change
+          "\n",
+
+          // Footer
+          "\x1B\x61\x01", // Center align
+          "\x1B\x45\x01", // Bold on
+          "شكراً لزيارتكم\n", // Thank you
+          "\x1B\x45\x00", // Bold off
+          "يرجى الاحتفاظ بالإيصال\n", // Keep receipt
+          "\n",
+          "www.foul-flafel.com\n",
+
+          "\x1B\x61\x00", // Left align
+          "\x1B\x52\x00", // Reset charset
+          "\n\n\n",
+          "\x1B\x69", // Cut paper
+        ];
+
+        return commands.join("");
+      }
+
+      // Convert ESC/POS commands to readable preview
+      function convertCommandsToPreview(commands) {
+        let preview = commands;
+
+        // Remove ESC/POS commands for preview
+        preview = preview.replace(/\x1B[\x40\x45\x21\x61\x74\x52\x69]/g, "");
+        preview = preview.replace(/\x1B[\x40-\xFF]./g, "");
+
+        // Clean up extra control characters
+        preview = preview.replace(/[\x00-\x1F]/g, function (match) {
+          return match === "\n" ? "\n" : "";
+        });
+
+        return preview;
+      }
+
+      // Initialize on page load
+      window.onload = function () {
+        log("Arabic Thermal Printer Test initialized");
+        log("Make sure QZ Tray is running before connecting");
+
+        // Auto-connect if QZ is available
+        if (typeof qz !== "undefined") {
+          setTimeout(connectQZ, 1000);
+        } else {
+          updateStatus("❌ QZ Tray library not loaded", "error");
+          log("QZ Tray library not available", "error");
+        }
+      };
     </script>
   </body>
 </html>
