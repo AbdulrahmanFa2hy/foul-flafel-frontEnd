@@ -374,13 +374,13 @@ class ThermalPrintingService {
                 ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
                 : "Courier New, monospace"
             };
-            font-size: 9px;
-            line-height: 1.2;
+            font-size: 8px;
+            line-height: 1.1;
             color: #000;
             background: #fff;
-            width: 72mm;
-            max-width: 72mm;
-            padding: 2mm;
+            width: 68mm;
+            max-width: 68mm;
+            padding: 1mm;
             margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
             overflow-wrap: break-word;
@@ -465,19 +465,19 @@ class ThermalPrintingService {
         }
         
         .col-qty {
-            width: 8mm;
+            width: 6mm;
             text-align: center;
             flex-shrink: 0;
         }
         
         .col-price {
-            width: 14mm;
+            width: 12mm;
             text-align: right;
             flex-shrink: 0;
         }
         
         .col-total {
-            width: 16mm;
+            width: 14mm;
             text-align: right;
             flex-shrink: 0;
         }
@@ -557,10 +557,10 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: 72mm; 
+                width: 68mm; 
                 margin: 0;
-                padding: 2mm;
-                max-width: 72mm;
+                padding: 1mm;
+                max-width: 68mm;
             }
         }
     </style>
@@ -841,13 +841,13 @@ class ThermalPrintingService {
                 ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
                 : "Courier New, monospace"
             };
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 9px;
+            line-height: 1.2;
             color: #000;
             background: #fff;
-            width: 72mm;
-            max-width: 72mm;
-            padding: 2mm;
+            width: 68mm;
+            max-width: 68mm;
+            padding: 1mm;
             margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
             overflow-wrap: break-word;
@@ -944,10 +944,10 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: 72mm; 
+                width: 68mm; 
                 margin: 0;
-                padding: 2mm;
-                max-width: 72mm;
+                padding: 1mm;
+                max-width: 68mm;
             }
         }
     </style>
@@ -1360,13 +1360,16 @@ class ThermalPrintingService {
    * Format amount with currency for display
    */
   formatAmount(amount, isArabic) {
+    const receiptSettings = this.getReceiptSettings();
     const num = Number(amount) || 0;
     const formatted = num.toFixed(2);
 
     if (isArabic) {
-      return `${this.toArabicNumerals(formatted)} ${this.settings.currencyAr}`;
+      const currency = receiptSettings.display?.currency || "درهم";
+      return `${this.toArabicNumerals(formatted)} ${currency}`;
     } else {
-      return `${this.settings.currency} ${formatted}`;
+      const currency = receiptSettings.display?.currencyEn || "AED";
+      return `${currency} ${formatted}`;
     }
   }
 
@@ -1673,6 +1676,8 @@ class ThermalPrintingService {
           showCustomerInfo: true,
           showTaxDetails: true,
           enableArabicSupport: this.settings.enableArabicSupport,
+          currency: "درهم",
+          currencyEn: "AED",
         },
       };
 
@@ -1728,6 +1733,8 @@ class ThermalPrintingService {
         showCustomerInfo: true,
         showTaxDetails: true,
         enableArabicSupport: this.settings.enableArabicSupport,
+        currency: "درهم",
+        currencyEn: "AED",
       },
     };
   }

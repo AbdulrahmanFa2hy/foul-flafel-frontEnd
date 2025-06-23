@@ -367,7 +367,9 @@
     "willDeleteItem": "Will delete the item",
     "decreaseQuantity": "Decrease quantity",
     "increaseQuantity": "Increase quantity",
-    "deleteItemManagerOnly": "Delete item (Manager only)"
+    "deleteItemManagerOnly": "Delete item (Manager only)",
+    "receiptPrinted": "Receipt printed successfully!",
+    "printFailed": "Failed to print receipt"
   },
   "numberKeys": {
     "input": "Input",
@@ -767,6 +769,8 @@
     "displaySettings": "Display Settings",
     "showCashierName": "Show cashier name on receipts",
     "cashierNameDescription": "When enabled, the cashier's name will appear in the receipt header as \"Served by: [Name]\"",
+    "currency": "Currency (Arabic)",
+    "currencyEn": "Currency (English)",
     "footerSettings": "Footer Settings",
     "thankYouMessage": "Thank You Message",
     "returnPolicy": "Return Policy",

@@ -338,7 +338,7 @@ const MenuPage = () => {
         }
       }
 
-      await dispatch(createOrder(orderData)).unwrap();
+      const result = await dispatch(createOrder(orderData)).unwrap();
 
       toast.success(t("menu.orderCreated"), {
         duration: 2000,
@@ -354,7 +354,9 @@ const MenuPage = () => {
       // Invalidate meals cache since ingredients/stock changed
       dispatch(invalidateCache());
 
-      navigate("/cashier");
+      navigate("/cashier", {
+        state: { fromOrderCreation: true, orderId: result.data._id },
+      });
     } catch (error) {
       console.error("Failed to create order:", error);
       toast.error(t("menu.orderFailed"), {

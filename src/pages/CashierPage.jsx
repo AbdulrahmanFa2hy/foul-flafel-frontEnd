@@ -7,9 +7,11 @@ import {
   Suspense,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { FaArrowLeft, FaTimes } from "react-icons/fa";
+import printingService from "../services/printingService";
 import CategoryTabs from "../components/common/CategoryTabs";
 import SearchInput from "../components/common/SearchInput";
 import MenuGrid from "../components/menu/MenuGrid";
@@ -34,6 +36,7 @@ const PaymentSection = lazy(() =>
 function CashierPage() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const location = useLocation();
 
   // Redux state with memoized selectors
   const {
@@ -195,6 +198,31 @@ function CashierPage() {
       dispatch(setSelectedOrder(null));
     }
   }, [orders, currentOrder, dispatch]);
+
+  // Auto-print when arriving from order creation
+  useEffect(() => {
+    const handleAutoPrint = async () => {
+      if (location.state?.fromOrderCreation && orders && orders.length > 0) {
+        const orderId = location.state.orderId;
+        const orderToPrint = orders.find((order) => order._id === orderId);
+
+        if (orderToPrint) {
+          try {
+            await printingService.printBothReceipts(orderToPrint);
+            toast.success(t("cashier.receiptPrinted"));
+          } catch (error) {
+            console.warn("Auto-print failed:", error);
+            toast.warning(t("cashier.printFailed"));
+          }
+        }
+
+        // Clear the navigation state to prevent re-printing
+        window.history.replaceState({}, document.title);
+      }
+    };
+
+    handleAutoPrint();
+  }, [location.state, orders, t]);
 
   useEffect(() => {
     selectOrderLogic();

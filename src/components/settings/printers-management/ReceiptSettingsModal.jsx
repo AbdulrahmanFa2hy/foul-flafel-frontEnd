@@ -297,6 +297,49 @@ const ReceiptSettingsModal = memo(function ReceiptSettingsModal({
                 >
                   {t("receiptSettings.cashierNameDescription")}
                 </p>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.currency")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.display?.currency || "درهم"}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          display: {
+                            ...prev.display,
+                            currency: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      placeholder="درهم"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.currencyEn")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.display?.currencyEn || "AED"}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          display: {
+                            ...prev.display,
+                            currencyEn: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                      placeholder="AED"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

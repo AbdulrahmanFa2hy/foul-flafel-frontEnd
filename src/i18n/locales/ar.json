@@ -361,7 +361,9 @@
     "willDeleteItem": "سيتم حذف العنصر",
     "decreaseQuantity": "تقليل الكمية",
     "increaseQuantity": "زيادة الكمية",
-    "deleteItemManagerOnly": "حذف العنصر (المدير فقط)"
+    "deleteItemManagerOnly": "حذف العنصر (المدير فقط)",
+    "receiptPrinted": "تم طباعة الفاتورة بنجاح!",
+    "printFailed": "فشل في طباعة الفاتورة"
   },
   "numberKeys": {
     "input": "الإدخال",
@@ -859,6 +861,8 @@
     "displaySettings": "إعدادات العرض",
     "showCashierName": "إظهار اسم الكاشير في الإيصالات",
     "cashierNameDescription": "عند التمكين، سيظهر اسم الكاشير في رأس الإيصال كـ \"خدمك: [الاسم]\"",
+    "currency": "العملة (عربي)",
+    "currencyEn": "العملة (إنجليزي)",
     "footerSettings": "إعدادات التذييل",
     "thankYouMessage": "رسالة الشكر",
     "returnPolicy": "سياسة الإرجاع",
