@@ -722,10 +722,6 @@ class ThermalPrintingService {
 
     <!-- Header Section -->
     <div class="header">
-        <div class="customer-title">${
-          hasArabic ? "فاتورة العميل" : "CUSTOMER RECEIPT"
-        }</div>
-        
         ${
           hasArabic && receiptSettings.header.businessNameAr
             ? `
@@ -1105,12 +1101,12 @@ class ThermalPrintingService {
         
         .arabic-text {
             direction: rtl;
-            text-align: right;
+            text-align: center;
         }
         
         .english-text {
             direction: ltr;
-            text-align: left;
+            text-align: center;
         }
         
         .copy-tag {
