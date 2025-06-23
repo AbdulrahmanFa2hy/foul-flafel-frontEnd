@@ -369,7 +369,9 @@
     "increaseQuantity": "Increase quantity",
     "deleteItemManagerOnly": "Delete item (Manager only)",
     "receiptPrinted": "Receipt printed successfully!",
-    "printFailed": "Failed to print receipt"
+    "printFailed": "Failed to print receipt",
+    "kitchenTicketPrinted": "Kitchen ticket printed successfully!",
+    "kitchenPrintFailed": "Failed to print kitchen ticket"
   },
   "numberKeys": {
     "input": "Input",

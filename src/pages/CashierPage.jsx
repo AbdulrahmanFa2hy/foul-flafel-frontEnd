@@ -199,7 +199,7 @@ function CashierPage() {
     }
   }, [orders, currentOrder, dispatch]);
 
-  // Auto-print when arriving from order creation
+  // Auto-print kitchen receipt only when arriving from order creation
   useEffect(() => {
     const handleAutoPrint = async () => {
       if (location.state?.fromOrderCreation && orders && orders.length > 0) {
@@ -208,11 +208,12 @@ function CashierPage() {
 
         if (orderToPrint) {
           try {
-            await printingService.printBothReceipts(orderToPrint);
-            toast.success(t("cashier.receiptPrinted"));
+            // Only print kitchen ticket when navigating from menu
+            await printingService.printKitchenTicket(orderToPrint);
+            toast.success(t("cashier.kitchenTicketPrinted"));
           } catch (error) {
-            console.warn("Auto-print failed:", error);
-            toast.warning(t("cashier.printFailed"));
+            console.warn("Kitchen ticket print failed:", error);
+            toast.warning(t("cashier.kitchenPrintFailed"));
           }
         }
 

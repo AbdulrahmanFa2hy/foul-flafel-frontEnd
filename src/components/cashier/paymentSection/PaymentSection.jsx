@@ -10,7 +10,7 @@ import PaymentMethodSelect from "./PaymentMethodSelect";
 import OrderSummary from "./OrderSummary";
 import PaymentModeToggle from "./PaymentModeToggle";
 import SplitPaymentRow from "./SplitPaymentRow";
-// import printingService from "../../../services/printingService";
+import printingService from "../../../services/printingService";
 
 // Lazy load print receipt modal
 const PrintReceiptModal = lazy(() => import("./PrintReceiptModal"));
@@ -226,8 +226,32 @@ function PaymentSection({
         navigate("/menu");
       }, 1500); // Short delay to let the user see the success message
 
-      // Don't auto-print after payment completion
-      // Auto-printing is handled when navigating from menu to cashier page
+      // Print customer receipt after successful payment
+      const orderData = {
+        ...currentOrder,
+        orderNumber:
+          currentOrder.orderCode || currentOrder._id?.slice(-8) || "N/A",
+        cashier: user?.name || "System",
+        paymentMethods,
+        tax: tax || 0,
+        discount: discount || 0,
+        finalTotal,
+        orderItems: currentOrder.orderItems || [],
+        orderItemsData: currentOrder.orderItemsData || [],
+        // Include customer data for the receipt
+        custName: currentOrder.custName || "",
+        custPhone: currentOrder.custPhone || currentOrder.custtPhone || "",
+        custAddress: currentOrder.custAddress || "",
+      };
+
+      // Print customer receipt only after payment
+      try {
+        await printingService.printCustomerReceipt(orderData);
+        // Don't show success message for printing to avoid confusion
+      } catch (error) {
+        console.warn("Customer receipt print failed:", error);
+        // Don't show error toast to avoid interrupting payment flow
+      }
     } catch (error) {
       console.error("Payment failed:", error);
 

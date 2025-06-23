@@ -28,6 +28,7 @@ class ThermalPrintingService {
     this.isConnected = false;
     this.currentMethod = "html"; // 'html', 'canvas', 'raw'
     this.printerCapabilities = new Map();
+    this.printQueue = new Map(); // Prevent duplicate print jobs
 
     // Arabic text detection regex
     this.arabicTextRegex =
@@ -82,7 +83,7 @@ class ThermalPrintingService {
   }
 
   /**
-   * Get available printers
+   * Get available printers (excluding virtual printers)
    */
   async getPrinters() {
     try {
@@ -90,15 +91,35 @@ class ThermalPrintingService {
         await this.initialize();
       }
 
-      const printers = await this.qzInstance.printers.find();
-      this.log("📄 Available printers:", printers);
+      const allPrinters = await this.qzInstance.printers.find();
 
-      // Test capabilities for each printer
-      for (const printer of printers) {
+      // Filter out virtual printers that cause save dialogs
+      const virtualPrinters = [
+        "Microsoft Print to PDF",
+        "Microsoft XPS Document Writer",
+        "OneNote",
+        "OneNote (Desktop)",
+        "Fax",
+        "Send To OneNote",
+        "Print to PDF",
+      ];
+
+      const physicalPrinters = allPrinters.filter(
+        (printer) =>
+          !virtualPrinters.some((virtual) =>
+            printer.toLowerCase().includes(virtual.toLowerCase())
+          )
+      );
+
+      this.log("📄 All available printers:", allPrinters);
+      this.log("🖨️ Physical printers only:", physicalPrinters);
+
+      // Test capabilities for each physical printer
+      for (const printer of physicalPrinters) {
         await this.detectPrinterCapabilities(printer);
       }
 
-      return printers;
+      return physicalPrinters;
     } catch (error) {
       this.log("❌ Failed to get printers:", error);
       throw error;
@@ -146,35 +167,70 @@ class ThermalPrintingService {
         await this.initialize();
       }
 
-      // Get printer
-      const targetPrinter = await this.selectPrinter(printerName);
+      // Create unique job ID to prevent duplicates
+      const jobId = `${orderData.orderNumber || "unknown"}-${
+        printerName || "default"
+      }-${options.type || "customer"}-${Date.now()}`;
 
-      // Detect Arabic content
-      const hasArabicContent = this.detectArabicContent(orderData);
-      this.log("🔍 Arabic content detected:", hasArabicContent);
+      // Check if this job is already in progress
+      if (this.printQueue.has(jobId)) {
+        this.log("⚠️ Print job already in progress, skipping:", jobId);
+        return false;
+      }
 
-      // Select optimal printing method
-      const printMethod = this.selectPrintingMethod(
-        targetPrinter,
-        hasArabicContent,
-        options.method
-      );
-      this.log("🎯 Selected printing method:", printMethod);
+      // Add to queue
+      this.printQueue.set(jobId, Date.now());
 
-      // Print using selected method
-      switch (printMethod) {
-        case "html":
-          return await this.printWithHTML(orderData, targetPrinter, options);
-        case "canvas":
-          return await this.printWithCanvas(orderData, targetPrinter, options);
-        case "raw":
-          return await this.printWithRawCommands(
-            orderData,
-            targetPrinter,
-            options
-          );
-        default:
-          throw new Error(`Unknown printing method: ${printMethod}`);
+      try {
+        // Get printer
+        const targetPrinter = await this.selectPrinter(printerName);
+
+        // Detect Arabic content
+        const hasArabicContent = this.detectArabicContent(orderData);
+        this.log("🔍 Arabic content detected:", hasArabicContent);
+
+        // Select optimal printing method
+        const printMethod = this.selectPrintingMethod(
+          targetPrinter,
+          hasArabicContent,
+          options.method
+        );
+        this.log("🎯 Selected printing method:", printMethod);
+
+        // Print using selected method
+        let result;
+        switch (printMethod) {
+          case "html":
+            result = await this.printWithHTML(
+              orderData,
+              targetPrinter,
+              options
+            );
+            break;
+          case "canvas":
+            result = await this.printWithCanvas(
+              orderData,
+              targetPrinter,
+              options
+            );
+            break;
+          case "raw":
+            result = await this.printWithRawCommands(
+              orderData,
+              targetPrinter,
+              options
+            );
+            break;
+          default:
+            throw new Error(`Unknown printing method: ${printMethod}`);
+        }
+
+        return result;
+      } finally {
+        // Remove from queue after completion
+        setTimeout(() => {
+          this.printQueue.delete(jobId);
+        }, 2000); // Keep in queue for 2 seconds to prevent rapid duplicates
       }
     } catch (error) {
       this.log("❌ Print receipt failed:", error);
@@ -1206,7 +1262,7 @@ class ThermalPrintingService {
       const availablePrinters = await this.getPrinters();
       if (availablePrinters.length === 0) {
         throw new Error(
-          "No printers found. Please ensure printers are installed and QZ Tray is running."
+          "No physical printers found. Please ensure thermal printers are installed and connected. Virtual printers like 'Microsoft Print to PDF' are not supported."
         );
       }
 

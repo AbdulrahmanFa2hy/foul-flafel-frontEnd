@@ -363,7 +363,9 @@
     "increaseQuantity": "زيادة الكمية",
     "deleteItemManagerOnly": "حذف العنصر (المدير فقط)",
     "receiptPrinted": "تم طباعة الفاتورة بنجاح!",
-    "printFailed": "فشل في طباعة الفاتورة"
+    "printFailed": "فشل في طباعة الفاتورة",
+    "kitchenTicketPrinted": "تم طباعة تذكرة المطبخ بنجاح!",
+    "kitchenPrintFailed": "فشل في طباعة تذكرة المطبخ"
   },
   "numberKeys": {
     "input": "الإدخال",
