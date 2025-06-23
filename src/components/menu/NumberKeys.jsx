@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FaPlus, FaMinus, FaCheck } from "react-icons/fa";
 
 // Enhanced Number keys component for bakery quantities
 const NumberKeys = ({
@@ -11,7 +10,8 @@ const NumberKeys = ({
   isCreatingOrder,
   calculateTotal,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
   const [displayValue, setDisplayValue] = useState("");
   const [lastSelectedItemId, setLastSelectedItemId] = useState(null);
   const [operatorUsed, setOperatorUsed] = useState(false);
@@ -73,13 +73,6 @@ const NumberKeys = ({
     return "";
   }, [displayValue, evaluateExpression]);
 
-  // Memoized insert button state
-  const insertButtonDisabled = useMemo(() => {
-    return (
-      !selectedItemId || !displayValue || evaluateExpression(displayValue) <= 0
-    );
-  }, [selectedItemId, displayValue, evaluateExpression]);
-
   // Reset state when item selection changes
   useEffect(() => {
     if (selectedItemId !== lastSelectedItemId) {
@@ -113,12 +106,15 @@ const NumberKeys = ({
     }
   }, [selectedItem, selectedItemId, formattedCurrentQuantity]);
 
-  // Memoized key click handler
-  const handleKeyClick = useCallback(
+  // Memoized number click handler - directly updates quantity
+  const handleNumberClick = useCallback(
     (key) => {
-      // For fraction values, replace the current display
+      if (!selectedItemId || !onNumberClick) return;
+
+      // For fraction values, use the value directly
       if (key.label.includes("/")) {
-        setDisplayValue(key.value);
+        onNumberClick(selectedItemId, key.value);
+        setDisplayValue(key.value.toString());
         setOperatorUsed(false);
         setUserStartedTyping(true);
         return;
@@ -171,63 +167,24 @@ const NumberKeys = ({
 
       setDisplayValue(newValue);
       setUserStartedTyping(true);
-    },
-    [displayValue, operatorUsed, userStartedTyping, selectedItem]
-  );
 
-  // Memoized operator click handler
-  const handleOperatorClick = useCallback(
-    (operator) => {
-      if (selectedItem) {
-        const currentQuantity = selectedItem.quantity || 0;
-
-        if (!displayValue || displayValue === currentQuantity.toString()) {
-          setDisplayValue(currentQuantity + operator);
-        } else if (
-          displayValue &&
-          !displayValue.endsWith(operator) &&
-          !/[+-]$/.test(displayValue)
-        ) {
-          setDisplayValue((prev) => prev + operator);
-        }
-
-        setOperatorUsed(true);
-        setUserStartedTyping(true);
-      }
-    },
-    [selectedItem, displayValue]
-  );
-
-  // Memoized clear handler - resets to quantity 1
-  const handleClear = useCallback(() => {
-    if (selectedItemId && onNumberClick) {
-      // Set quantity to 1 for both display and cart
-      onNumberClick(selectedItemId, 1);
-      setDisplayValue("1");
-    } else {
-      setDisplayValue("");
-    }
-    setOperatorUsed(false);
-    setUserStartedTyping(false);
-  }, [selectedItemId, onNumberClick]);
-
-  // Memoized insert handler
-  const handleInsert = useCallback(() => {
-    if (selectedItemId && displayValue && onNumberClick) {
-      const numericValue = evaluateExpression(displayValue);
+      // Auto-update quantity when user types
+      const numericValue = evaluateExpression(newValue);
       if (!isNaN(numericValue) && numericValue > 0) {
         const roundedValue = Math.round(numericValue * 100) / 100;
         onNumberClick(selectedItemId, roundedValue);
-
-        const formattedValue = Number(roundedValue)
-          .toFixed(2)
-          .replace(/\.?0+$/, "");
-        setDisplayValue(formattedValue);
-        setOperatorUsed(false);
-        setUserStartedTyping(false);
       }
-    }
-  }, [selectedItemId, displayValue, onNumberClick, evaluateExpression]);
+    },
+    [
+      displayValue,
+      operatorUsed,
+      userStartedTyping,
+      selectedItem,
+      selectedItemId,
+      onNumberClick,
+      evaluateExpression,
+    ]
+  );
 
   // Memoized number buttons data
   const numberButtons = useMemo(
@@ -248,91 +205,59 @@ const NumberKeys = ({
   );
 
   return (
-    <div className="bg-white space-y-3">
+    <div className="bg-white">
       {/* Display Value */}
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2 text-sm font-bold text-gray-600">
-          <div className="hidden sm:block text-sm text-gray-600">
-            {t("menu.total")}
-          </div>
-          {formattedTotal} <span className="hidden sm:inline-block">AED</span>
-        </div>
-        <div className="flex gap-1">
-          <div className="text-sm text-gray-600">
-            {displayValue
-              ? `${t("numberKeys.input")}: ${displayValue}`
-              : t("numberKeys.enterQuantity")}
-          </div>
-          <div className="text-sm font-bold text-blue-600">
-            {currentValue && `= ${currentValue}`}
-          </div>
+      <div
+        className={`flex items-center justify-between text-gray-600 mb-2 ${
+          isRTL ? "flex-row-reverse" : ""
+        }`}
+      >
+        <div className="">{t("menu.total")}</div>
+        <div>
+          {formattedTotal} <span>AED</span>
         </div>
       </div>
 
-      {/* 4-Column Grid Layout */}
-      <div className="grid grid-cols-4 gap-2">
-        {/* Row 1: 1, 2, 3, Insert */}
+      {/* 3-Column Grid Layout with larger buttons */}
+      <div className="grid grid-cols-3 gap-1">
+        {/* Row 1: 1, 2, 3 */}
         {[0, 1, 2].map((index) => (
           <button
             key={numberButtons[index].value}
-            onClick={() => handleKeyClick(numberButtons[index])}
-            className="h-10 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            onClick={() => handleNumberClick(numberButtons[index])}
+            className="h-14 text-lg font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
           >
             {numberButtons[index].label}
           </button>
         ))}
-        <button
-          onClick={handleInsert}
-          disabled={insertButtonDisabled}
-          className={`h-10 text-sm font-medium rounded-md transition-colors flex items-center justify-center ${
-            insertButtonDisabled
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-          title={t("numberKeys.insertQuantity")}
-        >
-          <FaCheck />
-        </button>
 
-        {/* Row 2: 4, 5, 6, + */}
+        {/* Row 2: 4, 5, 6 */}
         {[3, 4, 5].map((index) => (
           <button
             key={numberButtons[index].value}
-            onClick={() => handleKeyClick(numberButtons[index])}
-            className="h-10 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            onClick={() => handleNumberClick(numberButtons[index])}
+            className="h-14 text-lg font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
           >
             {numberButtons[index].label}
           </button>
         ))}
-        <button
-          onClick={() => handleOperatorClick("+")}
-          className="h-10 text-sm font-medium bg-green-100 text-green-700 border border-green-300 rounded-md hover:bg-green-200 transition-colors flex items-center justify-center"
-        >
-          <FaPlus />
-        </button>
 
-        {/* Row 3: 7, 8, 9, - */}
+        {/* Row 3: 7, 8, 9 */}
         {[6, 7, 8].map((index) => (
           <button
             key={numberButtons[index].value}
-            onClick={() => handleKeyClick(numberButtons[index])}
-            className="h-10 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            onClick={() => handleNumberClick(numberButtons[index])}
+            className="h-14 text-lg font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
           >
             {numberButtons[index].label}
           </button>
         ))}
-        <button
-          onClick={() => handleOperatorClick("-")}
-          className="h-10 text-sm font-medium bg-red-100 text-red-700 border border-red-300 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center"
-        >
-          <FaMinus />
-        </button>
 
-        {/* Row 4: Done, 0, ., Clear */}
+        {/* Row 4: Done, 0, . */}
         <button
           onClick={onCreateOrder}
           disabled={cart.length === 0 || isCreatingOrder}
-          className={`h-10 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${
+          className={`h-14 text-lg font-medium rounded-md transition-colors flex items-center justify-center gap-2 ${
             cart.length === 0 || isCreatingOrder
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-primary-700 text-white hover:bg-primary-800"
@@ -341,23 +266,16 @@ const NumberKeys = ({
           {isCreatingOrder ? t("numberKeys.creating") : t("numberKeys.done")}
         </button>
         <button
-          onClick={() => handleKeyClick(numberButtons[9])} // 0
-          className="h-10 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+          onClick={() => handleNumberClick(numberButtons[9])} // 0
+          className="h-14 text-lg font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
         >
           {numberButtons[9].label}
         </button>
         <button
-          onClick={() => handleKeyClick(numberButtons[10])} // .
-          className="h-10 text-sm font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
+          onClick={() => handleNumberClick(numberButtons[10])} // .
+          className="h-14 text-lg font-medium bg-white border border-gray-300 rounded-md hover:bg-blue-50 hover:border-blue-300 transition-colors"
         >
           {numberButtons[10].label}
-        </button>
-        <button
-          onClick={handleClear}
-          className="h-10 text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
-          title={t("numberKeys.resetToOne")}
-        >
-          {t("numberKeys.clear")}
         </button>
       </div>
     </div>

@@ -977,9 +977,7 @@ class ThermalPrintingService {
             ? `<div style="margin-top: 1mm;">${receiptSettings.footer.customText}</div>`
             : ""
         }
-        <div style="margin-top: 2mm; font-size: 7px;">
-            ${hasArabic ? "فاتورة العميل" : "Customer Copy"}
-        </div>
+        
     </div>
 </body>
 </html>`;

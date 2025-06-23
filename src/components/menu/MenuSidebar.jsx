@@ -106,7 +106,7 @@ const MenuSidebar = ({
       </div>
 
       {/* Number Keys Section - Always visible at bottom */}
-      <div className="border-t border-neutral-200 pt-4">
+      <div className="border-t border-neutral-200 pt-2">
         <NumberKeys
           selectedItemId={selectedCartItemId}
           onNumberClick={handleNumberKeyClick}
