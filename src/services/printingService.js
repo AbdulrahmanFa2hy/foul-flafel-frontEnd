@@ -746,43 +746,53 @@ class ThermalPrintingService {
         <div class="store-name">${receiptSettings.header.businessName}</div>
         `
         }
-        
+    </div>
+
+    <!-- Business Information -->
+    <div class="order-info">
         ${
           receiptSettings.header.address
-            ? `<div class="store-info">${
-                hasArabic && receiptSettings.header.addressAr
-                  ? receiptSettings.header.addressAr
-                  : receiptSettings.header.address
-              }${
+            ? `<div class="order-line">
+            <span>${hasArabic ? "العنوان:" : "Address:"}</span>
+            <span>${
+              hasArabic && receiptSettings.header.addressAr
+                ? receiptSettings.header.addressAr
+                : receiptSettings.header.address
+            }${
                 receiptSettings.header.city
                   ? `, ${receiptSettings.header.city}`
                   : ""
-              }</div>`
+              }</span>
+        </div>`
             : ""
         }
         
         ${
           receiptSettings.header.phone
-            ? `<div class="store-info">${
-                hasArabic
-                  ? `هاتف: ${
-                      receiptSettings.header.phoneAr ||
-                      receiptSettings.header.phone
-                    }`
-                  : `Tel: ${receiptSettings.header.phone}`
-              }</div>`
+            ? `<div class="order-line">
+            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
+            <span>${
+              receiptSettings.header.phoneAr || receiptSettings.header.phone
+            }</span>
+        </div>`
             : ""
         }
         
         ${
           receiptSettings.header.taxId
-            ? `<div class="store-info">Tax ID: ${receiptSettings.header.taxId}</div>`
+            ? `<div class="order-line">
+            <span>${hasArabic ? "الرقم الضريبي:" : "Tax ID:"}</span>
+            <span>${receiptSettings.header.taxId}</span>
+        </div>`
             : ""
         }
         
         ${
           receiptSettings.header.customText
-            ? `<div class="store-info">${receiptSettings.header.customText}</div>`
+            ? `<div class="order-line">
+            <span>${hasArabic ? "معلومات إضافية:" : "Info:"}</span>
+            <span>${receiptSettings.header.customText}</span>
+        </div>`
             : ""
         }
     </div>
@@ -806,7 +816,10 @@ class ThermalPrintingService {
             ? `
         <div class="order-line">
             <span>${hasArabic ? "نوع الطلب:" : "Order Type:"}</span>
-            <span>${safeOrderData.orderType}</span>
+            <span>${this.getOrderTypeArabic(
+              safeOrderData.orderType,
+              hasArabic
+            )}</span>
         </div>
         `
             : ""
@@ -1193,6 +1206,15 @@ class ThermalPrintingService {
         <div style="font-size: 9px;">${
           receiptSettings.header.businessName
         }</div>
+        ${
+          safeOrderData.tableNumber
+            ? `
+        <div style="font-size: 24px; font-weight: bold; margin-top: 2mm; color: #000; border: 2px solid #000; padding: 2mm; background: #fff;">
+            ${hasArabic ? "طاولة" : "TABLE"} ${safeOrderData.tableNumber}
+        </div>
+        `
+            : ""
+        }
     </div>
 
     <!-- Order Information -->
@@ -1206,51 +1228,18 @@ class ThermalPrintingService {
             <span>${new Date().toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
-              hour12: false,
+              hour12: true,
             })}</span>
         </div>
         
         ${
           safeOrderData.orderType
             ? `<div class="order-line">
-            <span>Type:</span>
-            <span>${safeOrderData.orderType}</span>
-        </div>`
-            : ""
-        }
-        
-        ${
-          safeOrderData.tableNumber
-            ? `<div class="order-line">
-            <span>Table:</span>
-            <span>${safeOrderData.tableNumber}</span>
-        </div>`
-            : ""
-        }
-        
-        ${
-          safeOrderData.custName
-            ? `<div class="order-line">
-            <span>Customer:</span>
-            <span>${safeOrderData.custName}</span>
-        </div>`
-            : ""
-        }
-        
-        ${
-          safeOrderData.custPhone
-            ? `<div class="order-line">
-            <span>Phone:</span>
-            <span>${safeOrderData.custPhone}</span>
-        </div>`
-            : ""
-        }
-        
-        ${
-          safeOrderData.custAddress
-            ? `<div class="order-line">
-            <span>Address:</span>
-            <span>${safeOrderData.custAddress}</span>
+            <span>${hasArabic ? "النوع:" : "Type:"}</span>
+            <span>${this.getOrderTypeArabic(
+              safeOrderData.orderType,
+              hasArabic
+            )}</span>
         </div>`
             : ""
         }
@@ -1628,20 +1617,24 @@ class ThermalPrintingService {
   }
 
   /**
-   * Format date and time for receipt (Gregorian calendar, no seconds)
+   * Format date and time for receipt (Gregorian calendar, with AM/PM)
    */
   formatDateTime(isArabic) {
     const now = new Date();
     if (isArabic) {
-      // Force Gregorian calendar for Arabic
-      return now.toLocaleDateString("ar-SA-u-ca-gregory", {
+      // Force Gregorian calendar for Arabic with AM/PM indicators
+      const dateStr = now.toLocaleDateString("ar-SA-u-ca-gregory", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
+      });
+      const timeStr = now.toLocaleTimeString("ar-SA", {
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false,
+        hour12: true,
       });
+      // Replace English AM/PM with Arabic equivalents
+      return `${dateStr} ${timeStr}`.replace(/AM/g, "ص").replace(/PM/g, "م");
     } else {
       return now.toLocaleDateString("en-US", {
         year: "numeric",
@@ -1649,7 +1642,7 @@ class ThermalPrintingService {
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false,
+        hour12: true,
       });
     }
   }
@@ -1716,6 +1709,25 @@ class ThermalPrintingService {
       bank: "Bank Transfer",
     };
     return methods[method] || method.toUpperCase();
+  }
+
+  /**
+   * Get order type in Arabic or English
+   */
+  getOrderTypeArabic(orderType, isArabic) {
+    if (!isArabic) return orderType;
+
+    const orderTypes = {
+      delivery: "توصيل",
+      takeout: "استلام",
+      "dine-in": "تناول في المطعم",
+      dinein: "تناول في المطعم",
+      pickup: "استلام",
+      table: "طاولة",
+    };
+
+    const lowerType = orderType.toLowerCase();
+    return orderTypes[lowerType] || orderType;
   }
 
   /**
