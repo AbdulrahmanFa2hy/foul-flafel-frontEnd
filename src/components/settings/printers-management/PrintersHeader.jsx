@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 const PrintersHeader = memo(function PrintersHeader({
   onOpenReceiptSettings,
   onOpenPrinterForm,
-  onTestArabicReceipt,
   isFormOpen,
 }) {
   const { t } = useTranslation();
@@ -23,17 +22,8 @@ const PrintersHeader = memo(function PrintersHeader({
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
-            onClick={onTestArabicReceipt}
-            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center text-sm sm:text-base order-3 sm:order-1"
-            title="Test Arabic Receipt Printing with IBM864"
-          >
-            <span className="text-lg mr-1 sm:mr-2">🇸🇦</span>
-            <span className="hidden sm:inline">Test Arabic Receipt</span>
-            <span className="sm:hidden">Arabic</span>
-          </button>
-          <button
             onClick={onOpenReceiptSettings}
-            className="px-3 sm:px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center text-sm sm:text-base order-2 sm:order-2"
+            className="px-3 sm:px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center text-sm sm:text-base order-1 sm:order-1"
           >
             <FaCog className="mr-1 sm:mr-2" />
             <span className="hidden xs:inline">
@@ -44,7 +34,7 @@ const PrintersHeader = memo(function PrintersHeader({
           {!isFormOpen && (
             <button
               onClick={onOpenPrinterForm}
-              className="px-3 sm:px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center text-sm sm:text-base order-1 sm:order-3"
+              className="px-3 sm:px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center text-sm sm:text-base order-2 sm:order-2"
             >
               <FaPlus className="mr-1 sm:mr-2" />
               <span className="hidden xs:inline">

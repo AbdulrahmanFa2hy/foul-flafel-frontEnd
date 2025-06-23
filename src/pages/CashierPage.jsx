@@ -202,64 +202,27 @@ function CashierPage() {
   // Auto-print when arriving from order creation
   useEffect(() => {
     const handleAutoPrint = async () => {
-      // Only run once when we have the navigation state and orders are loaded
-      if (
-        location.state?.fromOrderCreation &&
-        orders &&
-        orders.length > 0 &&
-        !location.state?.autoPrintProcessed
-      ) {
+      if (location.state?.fromOrderCreation && orders && orders.length > 0) {
         const orderId = location.state.orderId;
         const orderToPrint = orders.find((order) => order._id === orderId);
 
         if (orderToPrint) {
           try {
-            // Mark as processed immediately to prevent multiple prints
-            window.history.replaceState(
-              { autoPrintProcessed: true },
-              document.title
-            );
-
-            // Format order data for printing with all required fields
-            const orderDataForPrint = {
-              ...orderToPrint,
-              orderNumber:
-                orderToPrint.orderCode || orderToPrint._id?.slice(-8) || "N/A",
-              cashier: user?.name || "System",
-              orderItems: orderToPrint.orderItems || [],
-              orderItemsData: orderToPrint.orderItemsData || [],
-              subtotal: orderToPrint.subtotalPrice || 0,
-              tax: orderToPrint.taxAmount || 0,
-              discount: orderToPrint.discountAmount || 0,
-              total: orderToPrint.totalPrice || orderToPrint.finalTotal || 0,
-              paymentMethods: orderToPrint.paymentMethods || [],
-              custName: orderToPrint.custName || "",
-              custPhone:
-                orderToPrint.custPhone || orderToPrint.custtPhone || "",
-              custAddress: orderToPrint.custAddress || "",
-            };
-
-            await printingService.printBothReceipts(orderDataForPrint);
+            await printingService.printBothReceipts(orderToPrint);
             toast.success(t("cashier.receiptPrinted"));
           } catch (error) {
             console.warn("Auto-print failed:", error);
             toast.warning(t("cashier.printFailed"));
           }
-        } else {
-          // Clear the state if order not found
-          window.history.replaceState({}, document.title);
         }
+
+        // Clear the navigation state to prevent re-printing
+        window.history.replaceState({}, document.title);
       }
     };
 
     handleAutoPrint();
-  }, [
-    location.state?.fromOrderCreation,
-    location.state?.orderId,
-    location.state?.autoPrintProcessed,
-    orders,
-    t,
-  ]);
+  }, [location.state, orders, t]);
 
   useEffect(() => {
     selectOrderLogic();

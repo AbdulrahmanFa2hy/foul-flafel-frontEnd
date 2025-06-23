@@ -203,16 +203,17 @@ class ThermalPrintingService {
         colorType: "blackwhite",
         units: "mm",
         size: {
-          width: this.settings.paperWidth,
+          width: 72, // Fixed 72mm for printable area
           height: 200, // Auto-adjust based on content
         },
-        margins: { top: 2, right: 2, bottom: 2, left: 2 },
+        margins: { top: 0, right: 0, bottom: 0, left: 0 }, // No additional margins
         orientation: "portrait",
         density: 203, // DPI for thermal printers
         jobName: `Receipt-${orderData.orderNumber || "UNKNOWN"}`,
         // Ensure direct printing to printer, not file
         copies: 1,
         duplex: false,
+        file: "", // Ensure no file saving
       });
 
       // Create HTML print data
@@ -378,10 +379,11 @@ class ThermalPrintingService {
             line-height: 1.1;
             color: #000;
             background: #fff;
-            width: 80mm;
-            max-width: 80mm;
-            padding: 1mm;
+            width: 72mm;
+            max-width: 72mm;
+            padding: 4mm;
             margin: 0 auto;
+            box-sizing: border-box;
             direction: ${hasArabic ? "rtl" : "ltr"};
             overflow-wrap: break-word;
             word-wrap: break-word;
@@ -458,28 +460,30 @@ class ThermalPrintingService {
         
         .col-item {
             flex: 1;
-            padding-right: 0mm;
+            padding-right: 1mm;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            min-width: 30mm;
+            min-width: 0;
         }
         
         .col-qty {
-            width: 12mm;
+            width: 8mm;
             text-align: center;
             flex-shrink: 0;
         }
         
         .col-price {
-            width: 12mm;
+            width: 10mm;
             text-align: right;
             flex-shrink: 0;
+            font-size: 7px;
         }
         
         .col-total {
-            width: 14mm;
+            width: 12mm;
             text-align: right;
             flex-shrink: 0;
+            font-size: 7px;
         }
         
         .item-name {
@@ -557,10 +561,11 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: 80mm; 
+                width: 72mm; 
                 margin: 0;
-                padding: 1mm 0mm;
-                max-width: 80mm;
+                padding: 4mm;
+                max-width: 72mm;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -717,10 +722,16 @@ class ThermalPrintingService {
             <span>${this.formatAmount(safeOrderData.subtotal, hasArabic)}</span>
         </div>
         
+        ${
+          safeOrderData.tax > 0
+            ? `
         <div class="total-line">
             <span>${hasArabic ? "الضريبة:" : "Tax:"}</span>
             <span>${this.formatAmount(safeOrderData.tax, hasArabic)}</span>
         </div>
+        `
+            : ""
+        }
         
         ${
           safeOrderData.discount > 0
@@ -738,7 +749,10 @@ class ThermalPrintingService {
         
         <div class="total-line final">
             <span>${hasArabic ? "الإجمالي:" : "TOTAL:"}</span>
-            <span>${this.formatAmount(safeOrderData.total, hasArabic)}</span>
+            <span>${this.formatAmount(
+              safeOrderData.finalTotal || safeOrderData.total,
+              hasArabic
+            )}</span>
         </div>
     </div>
 
@@ -845,10 +859,11 @@ class ThermalPrintingService {
             line-height: 1.2;
             color: #000;
             background: #fff;
-            width: 80mm;
-            max-width: 80mm;
-            padding: 1mm 0mm;
+            width: 72mm;
+            max-width: 72mm;
+            padding: 4mm;
             margin: 0 auto;
+            box-sizing: border-box;
             direction: ${hasArabic ? "rtl" : "ltr"};
             overflow-wrap: break-word;
             word-wrap: break-word;
@@ -944,10 +959,11 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width:80mm; 
+                width: 72mm; 
                 margin: 0;
-                padding: 1mm 0mm;
-                max-width: 80mm;
+                padding: 4mm;
+                max-width: 72mm;
+                box-sizing: border-box;
             }
         }
     </style>
@@ -1289,18 +1305,12 @@ class ThermalPrintingService {
       ),
       cashier: String(orderData.cashier || "N/A"),
       orderItems: items,
-      subtotal:
-        Number(orderData.subtotal) ||
-        Number(orderData.subtotalPrice) ||
-        calculatedSubtotal,
+      subtotal: Number(orderData.subtotal) || calculatedSubtotal,
       tax: Number(orderData.tax) || Number(orderData.taxAmount) || 0,
       discount:
         Number(orderData.discount) || Number(orderData.discountAmount) || 0,
-      total:
-        Number(orderData.total) ||
-        Number(orderData.totalPrice) ||
-        Number(orderData.finalTotal) ||
-        0,
+      total: Number(orderData.total) || Number(orderData.finalTotal) || 0,
+      finalTotal: Number(orderData.finalTotal) || Number(orderData.total) || 0,
       paymentMethods: Array.isArray(orderData.paymentMethods)
         ? orderData.paymentMethods
         : [],
@@ -1538,34 +1548,70 @@ class ThermalPrintingService {
       this.log("🖨️ Printing to customer printer:", customerPrinterName);
       this.log("🖨️ Printing to kitchen printer:", kitchenPrinterName);
 
-      const results = await Promise.allSettled([
-        this.printCustomerReceipt(orderData, customerPrinterName),
-        this.printKitchenTicket(orderData, kitchenPrinterName),
-      ]);
+      const printTasks = [];
 
-      const customerSuccess = results[0].status === "fulfilled";
-      const kitchenSuccess = results[1].status === "fulfilled";
-
-      if (!customerSuccess) {
-        this.log("❌ Customer receipt failed:", results[0].reason);
+      // Only print customer receipt if customer printer is available
+      if (customerPrinterName) {
+        printTasks.push(
+          this.printCustomerReceipt(orderData, customerPrinterName)
+            .then(() => ({ success: true, type: "customer", error: null }))
+            .catch((error) => ({
+              success: false,
+              type: "customer",
+              error: error.message,
+            }))
+        );
       }
-      if (!kitchenSuccess) {
-        this.log("❌ Kitchen ticket failed:", results[1].reason);
+
+      // Only print kitchen ticket if kitchen printer is available
+      if (kitchenPrinterName) {
+        printTasks.push(
+          this.printKitchenTicket(orderData, kitchenPrinterName)
+            .then(() => ({ success: true, type: "kitchen", error: null }))
+            .catch((error) => ({
+              success: false,
+              type: "kitchen",
+              error: error.message,
+            }))
+        );
       }
 
-      // Return array format expected by cashier page
-      return [
-        {
-          success: customerSuccess,
-          type: "customer",
-          error: customerSuccess ? null : results[0].reason?.message,
-        },
-        {
-          success: kitchenSuccess,
-          type: "kitchen",
-          error: kitchenSuccess ? null : results[1].reason?.message,
-        },
-      ];
+      // If no printers are configured, try to print both to default printer
+      if (printTasks.length === 0) {
+        const defaultPrinter = await this.selectPrinter(null);
+        if (defaultPrinter) {
+          printTasks.push(
+            this.printCustomerReceipt(orderData, defaultPrinter)
+              .then(() => ({ success: true, type: "customer", error: null }))
+              .catch((error) => ({
+                success: false,
+                type: "customer",
+                error: error.message,
+              }))
+          );
+          printTasks.push(
+            this.printKitchenTicket(orderData, defaultPrinter)
+              .then(() => ({ success: true, type: "kitchen", error: null }))
+              .catch((error) => ({
+                success: false,
+                type: "kitchen",
+                error: error.message,
+              }))
+          );
+        }
+      }
+
+      const results = await Promise.all(printTasks);
+
+      results.forEach((result) => {
+        if (!result.success) {
+          this.log(`❌ ${result.type} receipt failed:`, result.error);
+        } else {
+          this.log(`✅ ${result.type} receipt printed successfully`);
+        }
+      });
+
+      return results;
     } catch (error) {
       this.log("❌ Print both receipts failed:", error);
       return [

@@ -10,6 +10,7 @@ import PaymentMethodSelect from "./PaymentMethodSelect";
 import OrderSummary from "./OrderSummary";
 import PaymentModeToggle from "./PaymentModeToggle";
 import SplitPaymentRow from "./SplitPaymentRow";
+// import printingService from "../../../services/printingService";
 
 // Lazy load print receipt modal
 const PrintReceiptModal = lazy(() => import("./PrintReceiptModal"));
@@ -28,6 +29,7 @@ function PaymentSection({
   const { currentOrder } = useSelector((state) => state.order);
   const { loading } = useSelector((state) => state.payment);
   const { currentShift } = useSelector((state) => state.shift);
+  const { user } = useSelector((state) => state.auth);
 
   const [paymentMode, setPaymentMode] = useState("single");
   const [singlePaymentMethod, setSinglePaymentMethod] = useState("cash");
@@ -41,7 +43,31 @@ function PaymentSection({
   const taxAmount = (subtotal * (tax || 0)) / 100;
   const finalTotal = subtotal - discountAmount + taxAmount;
 
-  // Note: Auto-print functionality moved to CashierPage to avoid conflicts
+  // Auto-print receipts after successful payment (currently disabled)
+  // const handleAutoPrint = async (orderData) => {
+  //   try {
+  //     const printResults = await printingService.printBothReceipts(orderData);
+
+  //     const successCount = printResults.filter(
+  //       (result) => result.success
+  //     ).length;
+  //     const failCount = printResults.filter((result) => !result.success).length;
+
+  //     if (successCount > 0 && failCount === 0) {
+  //       // toast.success(t("payment.receiptsPrinted"), { icon: "🖨️" });
+  //     } else if (successCount > 0 && failCount > 0) {
+  //       toast.success(
+  //         `${successCount} ${t("payment.someReceiptsFailed")} ${failCount}`,
+  //         { icon: "⚠️" }
+  //       );
+  //     } else {
+  //       toast.error(t("payment.printFailed"), { icon: "❌" });
+  //     }
+  //   } catch (error) {
+  //     console.error("Auto-print failed:", error);
+  //     toast.error(t("payment.autoPrintFailed"));
+  //   }
+  // };
 
   // Split payment handlers
   const handleSplitMethodChange = useCallback((index, method) => {
@@ -200,8 +226,8 @@ function PaymentSection({
         navigate("/menu");
       }, 1500); // Short delay to let the user see the success message
 
-      // Note: Auto-print is now handled in CashierPage when arriving from order creation
-      // We don't auto-print here to avoid conflicts and multiple print requests
+      // Don't auto-print after payment completion
+      // Auto-printing is handled when navigating from menu to cashier page
     } catch (error) {
       console.error("Payment failed:", error);
 
