@@ -530,6 +530,8 @@ function Printers() {
   useEffect(() => {
     if (printers.length > 0) {
       localStorage.setItem("printer_settings", JSON.stringify(printers));
+      // Also save to printing service for consistency
+      printingService.savePrinterSettings(printers);
     }
   }, [printers]);
 

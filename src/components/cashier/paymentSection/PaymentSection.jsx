@@ -245,6 +245,7 @@ function PaymentSection({
         tax: tax || 0,
         discount: discount || 0,
         finalTotal,
+        subtotal: finalTotal - (tax || 0) + (discount || 0), // Calculate subtotal
         orderItems: currentOrder.orderItems || [],
         orderItemsData: currentOrder.orderItemsData || [],
         // Include customer data for the receipt
@@ -253,12 +254,14 @@ function PaymentSection({
         custAddress: currentOrder.custAddress || "",
       };
 
-      // Print customer receipt only after payment (with unique job ID)
+      // Print customer receipt only after payment (to customer printer only)
       try {
         await printingService.printCustomerReceipt(orderData);
-        console.log("Customer receipt printed successfully");
+        console.log(
+          "✅ Customer receipt printed successfully to customer printer"
+        );
       } catch (error) {
-        console.warn("Customer receipt print failed:", error);
+        console.warn("❌ Customer receipt print failed:", error);
         // Don't show error toast to avoid interrupting payment flow
       }
     } catch (error) {

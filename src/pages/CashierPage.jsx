@@ -208,11 +208,12 @@ function CashierPage() {
 
         if (orderToPrint) {
           try {
-            // Only print kitchen ticket when navigating from menu
+            // Only print kitchen ticket when navigating from menu (to kitchen printer only)
             await printingService.printKitchenTicket(orderToPrint);
+            console.log("✅ Kitchen ticket printed successfully");
             toast.success(t("cashier.kitchenTicketPrinted"));
           } catch (error) {
-            console.warn("Kitchen ticket print failed:", error);
+            console.warn("❌ Kitchen ticket print failed:", error);
             toast.warning(t("cashier.kitchenPrintFailed"));
           }
         }

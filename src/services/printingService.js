@@ -576,7 +576,6 @@ class ThermalPrintingService {
         .total-line.final {
             font-weight: bold;
             font-size: 14px;
-            border-top: 1px solid #000;
             padding-top: 1mm;
             margin-top: 1mm;
         }
@@ -733,7 +732,7 @@ class ThermalPrintingService {
         : ""
     }
 
-    <div class="separator">* * * * * * * * * * * * * * * * * * * *</div>
+    
 
     <!-- Items Section -->
     <div class="items-section">
@@ -1041,11 +1040,19 @@ class ThermalPrintingService {
     </div>
 
     <!-- Order Information -->
-    <div class="order-info">
-        <div class="order-line">
-             <span>${new Date().toLocaleTimeString()}</span>
-            <span>${safeOrderData.orderNumber}</span>
-        </div>
+          <div class="order-info">
+          <div class="order-line">
+              <span>Order #:</span>
+              <span>${safeOrderData.orderNumber}</span>
+          </div>
+          <div class="order-line">
+              <span>Time:</span>
+              <span>${new Date().toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}</span>
+          </div>
         
         ${
           safeOrderData.custName
@@ -1393,17 +1400,19 @@ class ThermalPrintingService {
   }
 
   /**
-   * Format date and time for receipt
+   * Format date and time for receipt (Gregorian calendar, no seconds)
    */
   formatDateTime(isArabic) {
     const now = new Date();
     if (isArabic) {
-      return now.toLocaleDateString("ar-SA", {
+      // Force Gregorian calendar for Arabic
+      return now.toLocaleDateString("ar-SA-u-ca-gregory", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
       });
     } else {
       return now.toLocaleDateString("en-US", {
@@ -1412,6 +1421,7 @@ class ThermalPrintingService {
         day: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
       });
     }
   }
@@ -1527,11 +1537,15 @@ class ThermalPrintingService {
         // Get customer printer from settings
         const enabledPrinters = await this.getEnabledPrinters();
         const customerPrinter = enabledPrinters.find(
-          (p) => p.type === "customer" && p.enabled
+          (p) => p.type === "customer" && p.enabled && p.available
         );
 
         if (customerPrinter && customerPrinter.systemName) {
           targetPrinter = customerPrinter.systemName;
+        } else {
+          throw new Error(
+            "No customer printer configured or available. Please configure a customer printer in Settings > Printers."
+          );
         }
       }
 
@@ -1556,11 +1570,15 @@ class ThermalPrintingService {
         // Get kitchen printer from settings
         const enabledPrinters = await this.getEnabledPrinters();
         const kitchenPrinter = enabledPrinters.find(
-          (p) => p.type === "kitchen" && p.enabled
+          (p) => p.type === "kitchen" && p.enabled && p.available
         );
 
         if (kitchenPrinter && kitchenPrinter.systemName) {
           targetPrinter = kitchenPrinter.systemName;
+        } else {
+          throw new Error(
+            "No kitchen printer configured or available. Please configure a kitchen printer in Settings > Printers."
+          );
         }
       }
 
@@ -1591,20 +1609,20 @@ class ThermalPrintingService {
 
       if (!customerPrinterName) {
         const customerConfig = enabledPrinters.find(
-          (p) => p.type === "customer" && p.enabled
+          (p) => p.type === "customer" && p.enabled && p.available
         );
         customerPrinterName = customerConfig?.systemName;
       }
 
       if (!kitchenPrinterName) {
         const kitchenConfig = enabledPrinters.find(
-          (p) => p.type === "kitchen" && p.enabled
+          (p) => p.type === "kitchen" && p.enabled && p.available
         );
         kitchenPrinterName = kitchenConfig?.systemName;
       }
 
-      this.log("🖨️ Printing to customer printer:", customerPrinterName);
-      this.log("🖨️ Printing to kitchen printer:", kitchenPrinterName);
+      this.log("🖨️ Customer printer selected:", customerPrinterName || "None");
+      this.log("🖨️ Kitchen printer selected:", kitchenPrinterName || "None");
 
       const printTasks = [];
 
@@ -1612,12 +1630,28 @@ class ThermalPrintingService {
       if (customerPrinterName) {
         printTasks.push(
           this.printCustomerReceipt(orderData, customerPrinterName)
-            .then(() => ({ success: true, type: "customer", error: null }))
+            .then(() => ({
+              success: true,
+              type: "customer",
+              printer: customerPrinterName,
+              error: null,
+            }))
             .catch((error) => ({
               success: false,
               type: "customer",
+              printer: customerPrinterName,
               error: error.message,
             }))
+        );
+      } else {
+        this.log("⚠️ No customer printer configured or available");
+        printTasks.push(
+          Promise.resolve({
+            success: false,
+            type: "customer",
+            printer: "None",
+            error: "No customer printer configured",
+          })
         );
       }
 
@@ -1625,47 +1659,43 @@ class ThermalPrintingService {
       if (kitchenPrinterName) {
         printTasks.push(
           this.printKitchenTicket(orderData, kitchenPrinterName)
-            .then(() => ({ success: true, type: "kitchen", error: null }))
+            .then(() => ({
+              success: true,
+              type: "kitchen",
+              printer: kitchenPrinterName,
+              error: null,
+            }))
             .catch((error) => ({
               success: false,
               type: "kitchen",
+              printer: kitchenPrinterName,
               error: error.message,
             }))
         );
-      }
-
-      // If no printers are configured, try to print both to default printer
-      if (printTasks.length === 0) {
-        const defaultPrinter = await this.selectPrinter(null);
-        if (defaultPrinter) {
-          printTasks.push(
-            this.printCustomerReceipt(orderData, defaultPrinter)
-              .then(() => ({ success: true, type: "customer", error: null }))
-              .catch((error) => ({
-                success: false,
-                type: "customer",
-                error: error.message,
-              }))
-          );
-          printTasks.push(
-            this.printKitchenTicket(orderData, defaultPrinter)
-              .then(() => ({ success: true, type: "kitchen", error: null }))
-              .catch((error) => ({
-                success: false,
-                type: "kitchen",
-                error: error.message,
-              }))
-          );
-        }
+      } else {
+        this.log("⚠️ No kitchen printer configured or available");
+        printTasks.push(
+          Promise.resolve({
+            success: false,
+            type: "kitchen",
+            printer: "None",
+            error: "No kitchen printer configured",
+          })
+        );
       }
 
       const results = await Promise.all(printTasks);
 
       results.forEach((result) => {
         if (!result.success) {
-          this.log(`❌ ${result.type} receipt failed:`, result.error);
+          this.log(
+            `❌ ${result.type} receipt failed on ${result.printer}:`,
+            result.error
+          );
         } else {
-          this.log(`✅ ${result.type} receipt printed successfully`);
+          this.log(
+            `✅ ${result.type} receipt printed successfully on ${result.printer}`
+          );
         }
       });
 
@@ -1673,8 +1703,18 @@ class ThermalPrintingService {
     } catch (error) {
       this.log("❌ Print both receipts failed:", error);
       return [
-        { success: false, type: "customer", error: error.message },
-        { success: false, type: "kitchen", error: error.message },
+        {
+          success: false,
+          type: "customer",
+          printer: "Error",
+          error: error.message,
+        },
+        {
+          success: false,
+          type: "kitchen",
+          printer: "Error",
+          error: error.message,
+        },
       ];
     }
   }
@@ -1689,6 +1729,20 @@ class ThermalPrintingService {
     } catch (error) {
       this.log("⚠️ Failed to load printer settings:", error);
       return [];
+    }
+  }
+
+  /**
+   * Save printer settings to localStorage
+   */
+  savePrinterSettings(settings) {
+    try {
+      localStorage.setItem("printer_settings", JSON.stringify(settings));
+      this.log("💾 Printer settings saved to localStorage");
+      return true;
+    } catch (error) {
+      this.log("❌ Failed to save printer settings:", error);
+      return false;
     }
   }
 
@@ -1954,6 +2008,12 @@ class ThermalPrintingService {
       const printerSettings = this.getPrinterSettings();
       const availablePrinters = await this.getPrinters();
 
+      // If no settings exist, return empty array to force proper setup
+      if (!printerSettings || printerSettings.length === 0) {
+        this.log("⚠️ No printer settings found in localStorage");
+        return [];
+      }
+
       const enabledPrinters = printerSettings
         .filter((p) => p.enabled)
         .map((configPrinter) => {
@@ -1969,12 +2029,13 @@ class ThermalPrintingService {
 
           return {
             ...configPrinter,
-            systemName: systemPrinter || availablePrinters[0], // fallback to first available
+            systemName: systemPrinter || null, // Don't fallback to avoid wrong printer usage
             available: !!systemPrinter,
           };
-        });
+        })
+        .filter((printer) => printer.available); // Only return available printers
 
-      this.log("🖨️ Enabled printers with system names:", enabledPrinters);
+      this.log("🖨️ Enabled and available printers:", enabledPrinters);
       return enabledPrinters;
     } catch (error) {
       this.log("❌ Failed to get enabled printers:", error);
