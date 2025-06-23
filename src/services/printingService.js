@@ -439,7 +439,7 @@ class ThermalPrintingService {
     const receiptType = options.type || "customer";
 
     if (receiptType === "kitchen") {
-      return this.generateKitchenTicketHTML(orderData);
+      return this.generateKitchenTicketHTML(orderData, options);
     } else {
       return this.generateCustomerReceiptHTML(orderData, options);
     }
@@ -496,9 +496,17 @@ class ThermalPrintingService {
         
         .header {
             text-align: center;
-            border-bottom: 1px solid #000;
+            border-bottom: 2px solid #000;
             padding-bottom: 2mm;
-            margin-bottom: 2mm;
+            margin-bottom: 3mm;
+            background: #f8f8f8;
+        }
+        
+        .customer-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 1mm;
+            color: #000;
         }
         
         .store-name {
@@ -511,7 +519,7 @@ class ThermalPrintingService {
         }
         
         .store-name.arabic {
-            font-size: 14px;
+            font-size: 13px;
             direction: rtl;
             text-align: center;
         }
@@ -521,30 +529,20 @@ class ThermalPrintingService {
             margin-bottom: 0.5mm;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            text-align: center;
         }
         
-        .header-row {
+        .order-info {
+            margin: 2mm 0;
+            font-size: 10px;
+        }
+        
+        .order-line {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 0.5mm;
-            font-size: 8px;
-            width: 100%;
-            gap: 2mm;
-        }
-        
-        .header-left {
-            text-align: left;
-            flex: 1;
-            min-width: 0;
-            word-wrap: break-word;
-        }
-        
-        .header-right {
-            text-align: right;
-            flex: 1;
-            min-width: 0;
-            word-wrap: break-word;
+            margin-bottom: 1mm;
+            font-weight: bold;
+            align-items: center;
         }
         
         .separator {
@@ -724,6 +722,10 @@ class ThermalPrintingService {
 
     <!-- Header Section -->
     <div class="header">
+        <div class="customer-title">${
+          hasArabic ? "فاتورة العميل" : "CUSTOMER RECEIPT"
+        }</div>
+        
         ${
           hasArabic && receiptSettings.header.businessNameAr
             ? `
@@ -736,67 +738,34 @@ class ThermalPrintingService {
         }
         
         ${
-          receiptSettings.header.address && receiptSettings.header.city
-            ? `
-        <div class="header-row">
-            <div class="header-left">
-                ${
-                  hasArabic && receiptSettings.header.addressAr
-                    ? receiptSettings.header.addressAr
-                    : receiptSettings.header.address
-                }
-            </div>
-            <div class="header-right">
-                ${receiptSettings.header.city}
-            </div>
-        </div>
-        `
-            : receiptSettings.header.address
+          receiptSettings.header.address
             ? `<div class="store-info">${
                 hasArabic && receiptSettings.header.addressAr
                   ? receiptSettings.header.addressAr
                   : receiptSettings.header.address
+              }${
+                receiptSettings.header.city
+                  ? `, ${receiptSettings.header.city}`
+                  : ""
               }</div>`
             : ""
         }
         
         ${
-          receiptSettings.header.phone && receiptSettings.header.taxId
-            ? `
-        <div class="header-row">
-            <div class="header-left">
-                ${
-                  hasArabic
-                    ? `هاتف: ${
-                        receiptSettings.header.phoneAr ||
-                        receiptSettings.header.phone
-                      }`
-                    : `Tel: ${receiptSettings.header.phone}`
-                }
-            </div>
-            <div class="header-right">
-                Tax ID: ${receiptSettings.header.taxId}
-            </div>
-        </div>
-        `
-            : receiptSettings.header.phone
-            ? `
-        <div class="store-info">
-            ${
-              hasArabic
-                ? `هاتف: ${
-                    receiptSettings.header.phoneAr ||
-                    receiptSettings.header.phone
-                  }`
-                : `Tel: ${receiptSettings.header.phone}`
-            }
-        </div>
-        `
+          receiptSettings.header.phone
+            ? `<div class="store-info">${
+                hasArabic
+                  ? `هاتف: ${
+                      receiptSettings.header.phoneAr ||
+                      receiptSettings.header.phone
+                    }`
+                  : `Tel: ${receiptSettings.header.phone}`
+              }</div>`
             : ""
         }
         
         ${
-          !receiptSettings.header.phone && receiptSettings.header.taxId
+          receiptSettings.header.taxId
             ? `<div class="store-info">Tax ID: ${receiptSettings.header.taxId}</div>`
             : ""
         }
@@ -806,40 +775,48 @@ class ThermalPrintingService {
             ? `<div class="store-info">${receiptSettings.header.customText}</div>`
             : ""
         }
-        
-        <!-- Order Information in Header -->
-        <div class="header-row">
-            <div class="header-left">
-                <strong>Order: ${safeOrderData.orderNumber}</strong>
-            </div>
-            <div class="header-right">
-                ${this.formatDateTime(hasArabic)}
-            </div>
+    </div>
+
+    <!-- Order Information -->
+    <div class="order-info">
+        <div class="order-line">
+            <span>${hasArabic ? "رقم الطلب:" : "Order #:"}</span>
+            <span>${safeOrderData.orderNumber}</span>
         </div>
-        
-        <div class="header-row">
-            <div class="header-left">
-                Cashier: ${safeOrderData.cashier}
-            </div>
-            <div class="header-right">
-                ${
-                  safeOrderData.custName
-                    ? `Customer: ${safeOrderData.custName}`
-                    : ""
-                }
-            </div>
+        <div class="order-line">
+            <span>${hasArabic ? "التاريخ والوقت:" : "Date & Time:"}</span>
+            <span>${this.formatDateTime(hasArabic)}</span>
         </div>
-        
+        <div class="order-line">
+            <span>${hasArabic ? "الكاشير:" : "Cashier:"}</span>
+            <span>${safeOrderData.cashier}</span>
+        </div>
+        ${
+          safeOrderData.custName
+            ? `
+        <div class="order-line">
+            <span>${hasArabic ? "العميل:" : "Customer:"}</span>
+            <span>${safeOrderData.custName}</span>
+        </div>
+        `
+            : ""
+        }
         ${
           safeOrderData.custPhone
             ? `
-        <div class="header-row">
-            <div class="header-left">
-                Phone: ${safeOrderData.custPhone}
-            </div>
-            <div class="header-right">
-                <!-- Right side can be empty or additional info -->
-            </div>
+        <div class="order-line">
+            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
+            <span>${safeOrderData.custPhone}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          safeOrderData.custAddress
+            ? `
+        <div class="order-line">
+            <span>${hasArabic ? "العنوان:" : "Address:"}</span>
+            <span>${safeOrderData.custAddress}</span>
         </div>
         `
             : ""
@@ -943,10 +920,7 @@ class ThermalPrintingService {
         ? `
     <!-- Payment Information -->
     <div class="payment-section">
-        <div class="order-line" style="font-weight: bold; margin-bottom: 1mm;">
-            <span>${hasArabic ? "طرق الدفع:" : "Payment Methods:"}</span>
-            <span></span>
-        </div>
+        
         ${safeOrderData.paymentMethods
           .map(
             (payment) => `
@@ -1014,10 +988,11 @@ class ThermalPrintingService {
   /**
    * Generate kitchen ticket HTML with simplified layout for kitchen staff
    */
-  generateKitchenTicketHTML(orderData) {
+  generateKitchenTicketHTML(orderData, options = {}) {
     const hasArabic = this.detectArabicContent(orderData);
     const safeOrderData = this.sanitizeOrderData(orderData);
     const receiptSettings = this.getReceiptSettings();
+    const isCopy = options.isCopy || false;
 
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
@@ -1140,6 +1115,17 @@ class ThermalPrintingService {
             text-align: left;
         }
         
+        .copy-tag {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: #f0f0f0;
+            border: 2px solid #000;
+            padding: 2mm;
+            margin: 2mm 0;
+            color: #000;
+        }
+        
         @media print {
             body { 
                 width: 72mm; 
@@ -1152,6 +1138,17 @@ class ThermalPrintingService {
     </style>
 </head>
 <body>
+    <!-- Copy Tag for Reprints -->
+    ${
+      isCopy
+        ? `
+    <div class="copy-tag">
+        ${hasArabic ? "كوبي" : "COPY"}
+    </div>
+    `
+        : ""
+    }
+
     <!-- Kitchen Header -->
     <div class="header">
         <div class="kitchen-title">${
@@ -2463,6 +2460,51 @@ class ThermalPrintingService {
       return { error: error.message };
     }
   }
+
+  /**
+   * Test copy detection functionality
+   */
+  async testCopyDetection(printerName = null) {
+    const testData = {
+      orderNumber: "COPY-TEST-001",
+      cashier: "Test User",
+      custName: "Test Customer",
+      custPhone: "123-456-7890",
+      orderItems: [
+        {
+          name: "Test Item",
+          nameAr: "عنصر تجريبي",
+          quantity: 1,
+          price: 10.0,
+        },
+      ],
+      subtotal: 10.0,
+      tax: 1.5,
+      total: 11.5,
+      paymentMethods: [
+        {
+          method: "cash",
+          amount: 11.5,
+        },
+      ],
+    };
+
+    console.log("🧪 Testing copy detection...");
+
+    // First print - should NOT show copy tag
+    console.log("📄 First print (no copy tag expected):");
+    await this.printCustomerReceipt(testData, printerName);
+
+    // Wait a moment
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Second print - should show copy tag
+    console.log("📄 Second print (COPY tag expected):");
+    await this.printCustomerReceipt(testData, printerName);
+
+    console.log("✅ Copy detection test completed!");
+    return true;
+  }
 }
 
 // Create and export service instance
@@ -2482,8 +2524,10 @@ if (typeof window !== "undefined") {
   window.debugPrinters = () => printingService.debugPrinterConfiguration();
   window.clearPrintHistory = (orderId) =>
     printingService.clearPrintHistory(orderId);
+  window.testCopyDetection = (printerName) =>
+    printingService.testCopyDetection(printerName);
   console.log(
-    "🔧 Debug functions available: window.debugPrinters(), window.clearPrintHistory(orderId)"
+    "🔧 Debug functions available: window.debugPrinters(), window.clearPrintHistory(orderId), window.testCopyDetection(printerName)"
   );
 }
 
