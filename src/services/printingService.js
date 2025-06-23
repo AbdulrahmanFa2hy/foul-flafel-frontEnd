@@ -463,6 +463,7 @@ class ThermalPrintingService {
             margin-bottom: 1mm;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            text-align: center;
         }
         
         .store-name.arabic {
@@ -476,6 +477,24 @@ class ThermalPrintingService {
             margin-bottom: 0.5mm;
             word-wrap: break-word;
             overflow-wrap: break-word;
+        }
+        
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5mm;
+            font-size: 8px;
+        }
+        
+        .header-left {
+            text-align: left;
+            flex: 1;
+        }
+        
+        .header-right {
+            text-align: right;
+            flex: 1;
         }
         
         .separator {
@@ -643,83 +662,114 @@ class ThermalPrintingService {
         <div class="store-name">${receiptSettings.header.businessName}</div>
         `
         }
+        
         ${
-          receiptSettings.header.address
+          receiptSettings.header.address && receiptSettings.header.city
             ? `
-        ${
-          hasArabic && receiptSettings.header.addressAr
-            ? `
-        <div class="store-info arabic-text">${receiptSettings.header.addressAr}</div>
-        <div class="store-info english-text">${receiptSettings.header.address}</div>
+        <div class="header-row">
+            <div class="header-left">
+                ${
+                  hasArabic && receiptSettings.header.addressAr
+                    ? receiptSettings.header.addressAr
+                    : receiptSettings.header.address
+                }
+            </div>
+            <div class="header-right">
+                ${receiptSettings.header.city}
+            </div>
+        </div>
         `
-            : `
-        <div class="store-info">${receiptSettings.header.address}</div>
-        `
+            : receiptSettings.header.address
+            ? `<div class="store-info">${
+                hasArabic && receiptSettings.header.addressAr
+                  ? receiptSettings.header.addressAr
+                  : receiptSettings.header.address
+              }</div>`
+            : ""
         }
+        
+        ${
+          receiptSettings.header.phone && receiptSettings.header.taxId
+            ? `
+        <div class="header-row">
+            <div class="header-left">
+                ${
+                  hasArabic
+                    ? `هاتف: ${
+                        receiptSettings.header.phoneAr ||
+                        receiptSettings.header.phone
+                      }`
+                    : `Tel: ${receiptSettings.header.phone}`
+                }
+            </div>
+            <div class="header-right">
+                Tax ID: ${receiptSettings.header.taxId}
+            </div>
+        </div>
+        `
+            : receiptSettings.header.phone
+            ? `
+        <div class="store-info">
+            ${
+              hasArabic
+                ? `هاتف: ${
+                    receiptSettings.header.phoneAr ||
+                    receiptSettings.header.phone
+                  }`
+                : `Tel: ${receiptSettings.header.phone}`
+            }
+        </div>
         `
             : ""
         }
+        
         ${
-          receiptSettings.header.city
-            ? `<div class="store-info">${receiptSettings.header.city}</div>`
-            : ""
-        }
-        ${
-          receiptSettings.header.phone
-            ? `
-        ${
-          hasArabic && receiptSettings.header.phoneAr
-            ? `
-        <div class="store-info">هاتف: ${receiptSettings.header.phoneAr}</div>
-        <div class="store-info">Tel: ${receiptSettings.header.phone}</div>
-        `
-            : `
-        <div class="store-info">Tel: ${receiptSettings.header.phone}</div>
-        `
-        }
-        `
-            : ""
-        }
-        ${
-          receiptSettings.header.taxId
+          !receiptSettings.header.phone && receiptSettings.header.taxId
             ? `<div class="store-info">Tax ID: ${receiptSettings.header.taxId}</div>`
             : ""
         }
+        
         ${
           receiptSettings.header.customText
             ? `<div class="store-info">${receiptSettings.header.customText}</div>`
             : ""
         }
         
-        <!-- Order Information -->
-        <div class="store-info">
-            <strong>Order / رقم الطلب: ${safeOrderData.orderNumber}</strong>
+        <!-- Order Information in Header -->
+        <div class="header-row">
+            <div class="header-left">
+                <strong>Order: ${safeOrderData.orderNumber}</strong>
+            </div>
+            <div class="header-right">
+                ${this.formatDateTime(hasArabic)}
+            </div>
         </div>
-        <div class="store-info">
-            Cashier / الكاشير: ${safeOrderData.cashier}
-        </div>
-        <div class="store-info">
-            ${this.formatDateTime(hasArabic)}
+        
+        <div class="header-row">
+            <div class="header-left">
+                Cashier: ${safeOrderData.cashier}
+            </div>
+            <div class="header-right">
+                ${
+                  safeOrderData.custName
+                    ? `Customer: ${safeOrderData.custName}`
+                    : ""
+                }
+            </div>
         </div>
         
         ${
-          safeOrderData.custName || safeOrderData.custPhone
-            ? `
-        <!-- Customer Information -->
-        ${
-          safeOrderData.custName
-            ? `<div class="store-info">
-            ${hasArabic ? "العميل:" : "Customer:"} ${safeOrderData.custName}
-        </div>`
-            : ""
-        }
-        ${
           safeOrderData.custPhone
-            ? `<div class="store-info">
-            ${hasArabic ? "الهاتف:" : "Phone:"} ${safeOrderData.custPhone}
-        </div>`
-            : ""
-        }`
+            ? `
+        <div class="header-row">
+            <div class="header-left">
+                Phone: ${safeOrderData.custPhone}
+            </div>
+            <div class="header-right">
+                <!-- Right side can be empty or additional info -->
+            </div>
+        </div>
+        `
             : ""
         }
     </div>
@@ -1532,13 +1582,23 @@ class ThermalPrintingService {
       if (!targetPrinter) {
         // Get customer printer from settings
         const enabledPrinters = await this.getEnabledPrinters();
+        this.log(
+          "🔍 Looking for customer printer in enabled printers:",
+          enabledPrinters
+        );
+
         const customerPrinter = enabledPrinters.find(
           (p) => p.type === "customer" && p.enabled && p.available
         );
 
         if (customerPrinter && customerPrinter.systemName) {
           targetPrinter = customerPrinter.systemName;
+          this.log("✅ Found customer printer:", customerPrinter);
         } else {
+          this.log(
+            "❌ No customer printer found. Available printers:",
+            enabledPrinters
+          );
           throw new Error(
             "No customer printer configured or available. Please configure a customer printer in Settings > Printers."
           );
@@ -1565,13 +1625,23 @@ class ThermalPrintingService {
       if (!targetPrinter) {
         // Get kitchen printer from settings
         const enabledPrinters = await this.getEnabledPrinters();
+        this.log(
+          "🔍 Looking for kitchen printer in enabled printers:",
+          enabledPrinters
+        );
+
         const kitchenPrinter = enabledPrinters.find(
           (p) => p.type === "kitchen" && p.enabled && p.available
         );
 
         if (kitchenPrinter && kitchenPrinter.systemName) {
           targetPrinter = kitchenPrinter.systemName;
+          this.log("✅ Found kitchen printer:", kitchenPrinter);
         } else {
+          this.log(
+            "❌ No kitchen printer found. Available printers:",
+            enabledPrinters
+          );
           throw new Error(
             "No kitchen printer configured or available. Please configure a kitchen printer in Settings > Printers."
           );
@@ -2010,28 +2080,70 @@ class ThermalPrintingService {
         return [];
       }
 
+      this.log("🔧 Printer settings from localStorage:", printerSettings);
+      this.log("🖨️ Available system printers:", availablePrinters);
+
       const enabledPrinters = printerSettings
         .filter((p) => p.enabled)
         .map((configPrinter) => {
-          // Try to match config printer with actual system printer
-          const systemPrinter = availablePrinters.find(
-            (sp) =>
-              sp === configPrinter.name ||
-              sp.toLowerCase().includes(configPrinter.name.toLowerCase()) ||
-              configPrinter.name.toLowerCase().includes(sp.toLowerCase()) ||
-              (configPrinter.model &&
-                sp.toLowerCase().includes(configPrinter.model.toLowerCase()))
+          // Try multiple matching strategies to find the correct system printer
+          let systemPrinter = null;
+
+          // Strategy 1: Exact name match
+          systemPrinter = availablePrinters.find(
+            (sp) => sp === configPrinter.name
           );
 
-          return {
+          if (!systemPrinter) {
+            // Strategy 2: Case-insensitive partial match in both directions
+            systemPrinter = availablePrinters.find(
+              (sp) =>
+                sp.toLowerCase().includes(configPrinter.name.toLowerCase()) ||
+                configPrinter.name.toLowerCase().includes(sp.toLowerCase())
+            );
+          }
+
+          if (!systemPrinter && configPrinter.model) {
+            // Strategy 3: Model-based matching
+            systemPrinter = availablePrinters.find(
+              (sp) =>
+                sp.toLowerCase().includes(configPrinter.model.toLowerCase()) ||
+                configPrinter.model.toLowerCase().includes(sp.toLowerCase())
+            );
+          }
+
+          if (!systemPrinter) {
+            // Strategy 4: Fuzzy matching for common printer name patterns
+            const nameWords = configPrinter.name.toLowerCase().split(/[\s-_]+/);
+            systemPrinter = availablePrinters.find((sp) => {
+              const spLower = sp.toLowerCase();
+              return nameWords.some(
+                (word) => word.length > 2 && spLower.includes(word)
+              );
+            });
+          }
+
+          const result = {
             ...configPrinter,
-            systemName: systemPrinter || null, // Don't fallback to avoid wrong printer usage
+            systemName: systemPrinter || null,
             available: !!systemPrinter,
           };
+
+          this.log(
+            `🔍 Printer matching for "${configPrinter.name}" (${configPrinter.type}):`,
+            {
+              configName: configPrinter.name,
+              systemName: systemPrinter,
+              available: !!systemPrinter,
+              enabled: configPrinter.enabled,
+            }
+          );
+
+          return result;
         })
         .filter((printer) => printer.available); // Only return available printers
 
-      this.log("🖨️ Enabled and available printers:", enabledPrinters);
+      this.log("✅ Final enabled and available printers:", enabledPrinters);
       return enabledPrinters;
     } catch (error) {
       this.log("❌ Failed to get enabled printers:", error);
@@ -2154,6 +2266,78 @@ class ThermalPrintingService {
       };
     }
   }
+
+  /**
+   * Debug function to check printer configuration
+   */
+  async debugPrinterConfiguration() {
+    try {
+      console.log("🔧 === PRINTER CONFIGURATION DEBUG ===");
+
+      // Check QZ Tray status
+      const qzStatus = this.getQZStatus();
+      console.log("QZ Tray Status:", qzStatus);
+
+      // Get available system printers
+      const availablePrinters = await this.getPrinters();
+      console.log("Available System Printers:", availablePrinters);
+
+      // Get printer settings from localStorage
+      const printerSettings = this.getPrinterSettings();
+      console.log("Printer Settings from localStorage:", printerSettings);
+
+      // Get enabled printers with matching
+      const enabledPrinters = await this.getEnabledPrinters();
+      console.log("Enabled and Matched Printers:", enabledPrinters);
+
+      // Check for customer and kitchen printers specifically
+      const customerPrinter = enabledPrinters.find(
+        (p) => p.type === "customer" && p.enabled && p.available
+      );
+      const kitchenPrinter = enabledPrinters.find(
+        (p) => p.type === "kitchen" && p.enabled && p.available
+      );
+
+      console.log("Customer Printer Found:", customerPrinter);
+      console.log("Kitchen Printer Found:", kitchenPrinter);
+
+      // Test recommendations
+      if (!customerPrinter) {
+        console.warn("⚠️ No customer printer configured or available!");
+      }
+      if (!kitchenPrinter) {
+        console.warn("⚠️ No kitchen printer configured or available!");
+      }
+      if (
+        customerPrinter &&
+        kitchenPrinter &&
+        customerPrinter.systemName === kitchenPrinter.systemName
+      ) {
+        console.warn(
+          "⚠️ Customer and kitchen printers are mapped to the same system printer!"
+        );
+      }
+
+      console.log("🔧 === END DEBUG ===");
+
+      return {
+        qzStatus,
+        availablePrinters,
+        printerSettings,
+        enabledPrinters,
+        customerPrinter,
+        kitchenPrinter,
+        isConfiguredCorrectly: !!(
+          customerPrinter &&
+          kitchenPrinter &&
+          customerPrinter.systemName !== kitchenPrinter.systemName
+        ),
+      };
+    } catch (error) {
+      console.error("❌ Debug failed:", error);
+      return { error: error.message };
+    }
+  }
 }
 
 // Create and export service instance
@@ -2168,6 +2352,10 @@ if (typeof window !== "undefined") {
       });
     }
   });
+
+  // Expose debug function globally for troubleshooting
+  window.debugPrinters = () => printingService.debugPrinterConfiguration();
+  console.log("🔧 Debug function available: window.debugPrinters()");
 }
 
 export default printingService;
