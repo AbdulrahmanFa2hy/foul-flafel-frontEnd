@@ -845,9 +845,9 @@ class ThermalPrintingService {
             line-height: 1.2;
             color: #000;
             background: #fff;
-            width: 68mm;
-            max-width: 68mm;
-            padding: 1mm;
+            width: 80mm;
+            max-width: 80mm;
+            padding: 1mm 0mm;
             margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
             overflow-wrap: break-word;
@@ -944,10 +944,10 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: 68mm; 
+                width:80mm; 
                 margin: 0;
-                padding: 1mm;
-                max-width: 68mm;
+                padding: 1mm 0mm;
+                max-width: 80mm;
             }
         }
     </style>
