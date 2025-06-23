@@ -263,6 +263,9 @@ class ThermalPrintingService {
       const printKey = `${orderId}-${options.type || "customer"}`;
       const hasPrintedBefore = this.printHistory.has(printKey);
 
+      // Mark this order as printed BEFORE generating HTML
+      this.printHistory.set(printKey, Date.now());
+
       // Add copy flag if this is a reprint
       const printOptions = {
         ...options,
@@ -270,9 +273,6 @@ class ThermalPrintingService {
       };
 
       const htmlContent = this.generateReceiptHTML(orderData, printOptions);
-
-      // Mark this order as printed
-      this.printHistory.set(printKey, Date.now());
 
       // Create QZ config for HTML printing - ensure direct printing to printer
       const config = this.qzInstance.configs.create(printerName, {
@@ -326,6 +326,9 @@ class ThermalPrintingService {
       const printKey = `${orderId}-${options.type || "customer"}`;
       const hasPrintedBefore = this.printHistory.has(printKey);
 
+      // Mark this order as printed BEFORE generating HTML
+      this.printHistory.set(printKey, Date.now());
+
       // Add copy flag if this is a reprint
       const printOptions = {
         ...options,
@@ -334,9 +337,6 @@ class ThermalPrintingService {
 
       // Create HTML content
       const htmlContent = this.generateReceiptHTML(orderData, printOptions);
-
-      // Mark this order as printed
-      this.printHistory.set(printKey, Date.now());
 
       // Create temporary iframe to render HTML
       const iframe = document.createElement("iframe");
@@ -402,6 +402,9 @@ class ThermalPrintingService {
       const printKey = `${orderId}-${options.type || "customer"}`;
       const hasPrintedBefore = this.printHistory.has(printKey);
 
+      // Mark this order as printed BEFORE generating commands
+      this.printHistory.set(printKey, Date.now());
+
       // Add copy flag if this is a reprint
       const printOptions = {
         ...options,
@@ -409,9 +412,6 @@ class ThermalPrintingService {
       };
 
       const commands = this.generateRawCommands(orderData, printOptions);
-
-      // Mark this order as printed
-      this.printHistory.set(printKey, Date.now());
 
       const config = this.qzInstance.configs.create(printerName);
       const printData = [
@@ -581,6 +581,7 @@ class ThermalPrintingService {
         
         .items-section {
             margin: 2mm 0;
+            border-top: 1px solid #000;
         }
         
         .items-header {
@@ -746,9 +747,7 @@ class ThermalPrintingService {
         <div class="store-name">${receiptSettings.header.businessName}</div>
         `
         }
-    </div>
-
-    <!-- Business Information -->
+        <!-- Business Information -->
     <div class="order-info">
         ${
           receiptSettings.header.address
@@ -796,28 +795,21 @@ class ThermalPrintingService {
             : ""
         }
     </div>
+    </div>
 
     <!-- Order Information -->
     <div class="order-info">
         <div class="order-line">
-            <span>${hasArabic ? "رقم الطلب:" : "Order #:"}</span>
+            <span>${this.formatDateTime(hasArabic)}</span>
             <span>${safeOrderData.orderNumber}</span>
         </div>
-        <div class="order-line">
-            <span>${hasArabic ? "التاريخ والوقت:" : "Date & Time:"}</span>
-            <span>${this.formatDateTime(hasArabic)}</span>
-        </div>
-        <div class="order-line">
-            <span>${hasArabic ? "الكاشير:" : "Cashier:"}</span>
-            <span>${safeOrderData.cashier}</span>
-        </div>
         ${
-          safeOrderData.orderType
+          safeOrderData.orderType || safeOrderData.cashier
             ? `
         <div class="order-line">
-            <span>${hasArabic ? "نوع الطلب:" : "Order Type:"}</span>
+            <span>${safeOrderData.cashier || ""}</span>
             <span>${this.getOrderTypeArabic(
-              safeOrderData.orderType,
+              safeOrderData.orderType || "",
               hasArabic
             )}</span>
         </div>
@@ -1220,16 +1212,12 @@ class ThermalPrintingService {
     <!-- Order Information -->
     <div class="order-info">
         <div class="order-line">
-            <span>Order #:</span>
-            <span>${safeOrderData.orderNumber}</span>
-        </div>
-        <div class="order-line">
-            <span>Time:</span>
             <span>${new Date().toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
               hour12: true,
             })}</span>
+            <span>${safeOrderData.orderNumber}</span>
         </div>
         
         ${
@@ -1266,13 +1254,6 @@ class ThermalPrintingService {
         `
           )
           .join("")}
-    </div>
-
-    <!-- Footer -->
-    <div class="datetime">
-        ${hasArabic ? "نسخة المطبخ" : "Kitchen Copy"} - ${this.formatDateTime(
-      hasArabic
-    )}
     </div>
 </body>
 </html>`;
@@ -1624,7 +1605,6 @@ class ThermalPrintingService {
     if (isArabic) {
       // Force Gregorian calendar for Arabic with AM/PM indicators
       const dateStr = now.toLocaleDateString("ar-SA-u-ca-gregory", {
-        year: "numeric",
         month: "2-digit",
         day: "2-digit",
       });
@@ -1637,7 +1617,6 @@ class ThermalPrintingService {
       return `${dateStr} ${timeStr}`.replace(/AM/g, "ص").replace(/PM/g, "م");
     } else {
       return now.toLocaleDateString("en-US", {
-        year: "numeric",
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
@@ -2638,6 +2617,9 @@ class ThermalPrintingService {
 
     console.log("🧪 Testing copy detection...");
 
+    // Clear any existing print history for this test
+    this.clearPrintHistory("COPY-TEST-001");
+
     // First print - should NOT show copy tag
     console.log("📄 First print (no copy tag expected):");
     await this.printCustomerReceipt(testData, printerName);
@@ -2651,6 +2633,69 @@ class ThermalPrintingService {
 
     console.log("✅ Copy detection test completed!");
     return true;
+  }
+
+  /**
+   * Test copy detection in console (without actual printing)
+   */
+  testCopyDetectionConsole() {
+    const testData = {
+      orderNumber: "COPY-TEST-CONSOLE",
+      cashier: "Test User",
+      orderItems: [
+        {
+          name: "Test Item",
+          nameAr: "عنصر تجريبي",
+          quantity: 1,
+          price: 10.0,
+        },
+      ],
+      subtotal: 10.0,
+      tax: 1.5,
+      total: 11.5,
+    };
+
+    console.log("🧪 Testing copy detection in console...");
+
+    // Clear any existing print history for this test
+    this.clearPrintHistory("COPY-TEST-CONSOLE");
+
+    // Simulate first print
+    const orderId = testData.orderNumber;
+    const printKey = `${orderId}-customer`;
+
+    console.log("📄 FIRST PRINT (should NOT show copy tag):");
+    const hasPrintedBefore1 = this.printHistory.has(printKey);
+    console.log(`Print history has key: ${hasPrintedBefore1}`);
+
+    // Mark as printed (simulating the print process)
+    this.printHistory.set(printKey, Date.now());
+
+    const receipt1 = this.generateCustomerReceiptHTML(testData, {
+      isCopy: hasPrintedBefore1,
+    });
+    const hasCopyTag1 = receipt1.includes("COPY") || receipt1.includes("كوبي");
+    console.log(`Receipt 1 has copy tag: ${hasCopyTag1}`);
+
+    // Simulate second print
+    console.log("\n📄 SECOND PRINT (should show copy tag):");
+    const hasPrintedBefore2 = this.printHistory.has(printKey);
+    console.log(`Print history has key: ${hasPrintedBefore2}`);
+
+    const receipt2 = this.generateCustomerReceiptHTML(testData, {
+      isCopy: hasPrintedBefore2,
+    });
+    const hasCopyTag2 = receipt2.includes("COPY") || receipt2.includes("كوبي");
+    console.log(`Receipt 2 has copy tag: ${hasCopyTag2}`);
+
+    console.log("\n✅ Copy detection test results:");
+    console.log(`First print copy tag: ${hasCopyTag1} (should be false)`);
+    console.log(`Second print copy tag: ${hasCopyTag2} (should be true)`);
+
+    const testPassed = !hasCopyTag1 && hasCopyTag2;
+    console.log(`Test ${testPassed ? "PASSED" : "FAILED"} ✅`);
+
+    return testPassed;
   }
 
   /**
@@ -2744,6 +2789,8 @@ if (typeof window !== "undefined") {
     printingService.clearPrintHistory(orderId);
   window.testCopyDetection = (printerName) =>
     printingService.testCopyDetection(printerName);
+  window.testCopyDetectionConsole = () =>
+    printingService.testCopyDetectionConsole();
   window.showReceipts = (orderData) =>
     printingService.showBothReceiptsInConsole(orderData);
   window.showDemoReceipts = () => printingService.showDemoReceipts();
@@ -2751,7 +2798,10 @@ if (typeof window !== "undefined") {
   console.log("   - window.debugPrinters() // Debug printer configuration");
   console.log("   - window.clearPrintHistory(orderId) // Clear print history");
   console.log(
-    "   - window.testCopyDetection(printerName) // Test copy detection"
+    "   - window.testCopyDetection(printerName) // Test copy detection with printer"
+  );
+  console.log(
+    "   - window.testCopyDetectionConsole() // Test copy detection in console only"
   );
   console.log(
     "   - window.showReceipts(orderData) // Show receipts with your data"
