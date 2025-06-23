@@ -46,9 +46,9 @@ const TableGrid = ({ tables = [], onSelectTable, seatingType }) => {
         {isManager && (
           <div
             onClick={() => setIsAddModalOpen(true)}
-            className="flex justify-center items-center border-2 border-dashed border-primary-700 rounded-xl p-6 cursor-pointer hover:border-primary-800 hover:bg-primary-50 transition-all duration-200 h-[80px]"
+            className="flex justify-center items-center border-2 border-dashed border-primary-700 rounded-xl min-h-[90px] p-4 lg:p-7 cursor-pointer hover:border-primary-800 hover:bg-primary-50 transition-all duration-200 "
           >
-            <span className="text-primary-700 font-medium flex items-center justify-center gap-4">
+            <span className="text-primary-700 font-medium flex items-center justify-center gap-4 text-lg">
               {t("table.addTable")}
             </span>
           </div>
