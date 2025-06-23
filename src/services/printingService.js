@@ -29,6 +29,7 @@ class ThermalPrintingService {
     this.currentMethod = "html"; // 'html', 'canvas', 'raw'
     this.printerCapabilities = new Map();
     this.printQueue = new Map(); // Prevent duplicate print jobs
+    this.printHistory = new Map(); // Track printed orders for copy detection
 
     // Arabic text detection regex
     this.arabicTextRegex =
@@ -257,7 +258,21 @@ class ThermalPrintingService {
         throw new Error("No printer specified for HTML printing");
       }
 
-      const htmlContent = this.generateReceiptHTML(orderData, options);
+      // Check if this order has been printed before (for copy detection)
+      const orderId = orderData.orderNumber || orderData._id || "unknown";
+      const printKey = `${orderId}-${options.type || "customer"}`;
+      const hasPrintedBefore = this.printHistory.has(printKey);
+
+      // Add copy flag if this is a reprint
+      const printOptions = {
+        ...options,
+        isCopy: hasPrintedBefore,
+      };
+
+      const htmlContent = this.generateReceiptHTML(orderData, printOptions);
+
+      // Mark this order as printed
+      this.printHistory.set(printKey, Date.now());
 
       // Create QZ config for HTML printing - ensure direct printing to printer
       const config = this.qzInstance.configs.create(printerName, {
@@ -306,8 +321,22 @@ class ThermalPrintingService {
     try {
       this.log("🎨 Printing with Canvas method...");
 
+      // Check if this order has been printed before (for copy detection)
+      const orderId = orderData.orderNumber || orderData._id || "unknown";
+      const printKey = `${orderId}-${options.type || "customer"}`;
+      const hasPrintedBefore = this.printHistory.has(printKey);
+
+      // Add copy flag if this is a reprint
+      const printOptions = {
+        ...options,
+        isCopy: hasPrintedBefore,
+      };
+
       // Create HTML content
-      const htmlContent = this.generateReceiptHTML(orderData, options);
+      const htmlContent = this.generateReceiptHTML(orderData, printOptions);
+
+      // Mark this order as printed
+      this.printHistory.set(printKey, Date.now());
 
       // Create temporary iframe to render HTML
       const iframe = document.createElement("iframe");
@@ -368,7 +397,21 @@ class ThermalPrintingService {
     try {
       this.log("⚡ Printing with Raw ESC/POS commands...");
 
-      const commands = this.generateRawCommands(orderData, options);
+      // Check if this order has been printed before (for copy detection)
+      const orderId = orderData.orderNumber || orderData._id || "unknown";
+      const printKey = `${orderId}-${options.type || "customer"}`;
+      const hasPrintedBefore = this.printHistory.has(printKey);
+
+      // Add copy flag if this is a reprint
+      const printOptions = {
+        ...options,
+        isCopy: hasPrintedBefore,
+      };
+
+      const commands = this.generateRawCommands(orderData, printOptions);
+
+      // Mark this order as printed
+      this.printHistory.set(printKey, Date.now());
 
       const config = this.qzInstance.configs.create(printerName);
       const printData = [
@@ -398,17 +441,18 @@ class ThermalPrintingService {
     if (receiptType === "kitchen") {
       return this.generateKitchenTicketHTML(orderData);
     } else {
-      return this.generateCustomerReceiptHTML(orderData);
+      return this.generateCustomerReceiptHTML(orderData, options);
     }
   }
 
   /**
    * Generate customer receipt HTML with full details and payment information
    */
-  generateCustomerReceiptHTML(orderData) {
+  generateCustomerReceiptHTML(orderData, options = {}) {
     const hasArabic = this.detectArabicContent(orderData);
     const safeOrderData = this.sanitizeOrderData(orderData);
     const receiptSettings = this.getReceiptSettings();
+    const isCopy = options.isCopy || false;
 
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
@@ -482,19 +526,25 @@ class ThermalPrintingService {
         .header-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 0.5mm;
             font-size: 8px;
+            width: 100%;
+            gap: 2mm;
         }
         
         .header-left {
             text-align: left;
             flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
         }
         
         .header-right {
             text-align: right;
             flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
         }
         
         .separator {
@@ -638,6 +688,17 @@ class ThermalPrintingService {
             padding-top: 1mm;
         }
         
+        .copy-tag {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: #f0f0f0;
+            border: 2px solid #000;
+            padding: 2mm;
+            margin: 2mm 0;
+            color: #000;
+        }
+        
         @media print {
             body { 
                 width: 72mm; 
@@ -650,6 +711,17 @@ class ThermalPrintingService {
     </style>
 </head>
 <body>
+    <!-- Copy Tag for Reprints -->
+    ${
+      isCopy
+        ? `
+    <div class="copy-tag">
+        ${hasArabic ? "كوبي" : "COPY"}
+    </div>
+    `
+        : ""
+    }
+
     <!-- Header Section -->
     <div class="header">
         ${
@@ -865,11 +937,16 @@ class ThermalPrintingService {
     </div>
 
     ${
-      safeOrderData.paymentMethods && safeOrderData.paymentMethods.length > 0
+      safeOrderData.paymentMethods &&
+      safeOrderData.paymentMethods.length > 0 &&
+      safeOrderData.paymentMethods.some((payment) => payment.method !== "cash")
         ? `
     <!-- Payment Information -->
     <div class="payment-section">
-      
+        <div class="order-line" style="font-weight: bold; margin-bottom: 1mm;">
+            <span>${hasArabic ? "طرق الدفع:" : "Payment Methods:"}</span>
+            <span></span>
+        </div>
         ${safeOrderData.paymentMethods
           .map(
             (payment) => `
@@ -1170,14 +1247,25 @@ class ThermalPrintingService {
   /**
    * Generate raw ESC/POS commands (basic fallback)
    */
-  generateRawCommands(orderData) {
+  generateRawCommands(orderData, options = {}) {
     const commands = [];
+    const isCopy = options.isCopy || false;
 
     // Initialize printer
     commands.push("\x1B\x40"); // ESC @ - Initialize
 
     // Set character set (try Windows-1256 for Arabic)
     commands.push("\x1B\x74\x16"); // ESC t 22 (Windows-1256)
+
+    // Copy tag for reprints
+    if (isCopy) {
+      commands.push("\x1B\x61\x01"); // Center align
+      commands.push("\x1B\x45\x01"); // Bold on
+      commands.push("COPY\n");
+      commands.push("\x1B\x45\x00"); // Bold off
+      commands.push("\x1B\x61\x00"); // Left align
+      commands.push("----------------------------------------\n");
+    }
 
     // Header
     commands.push("\x1B\x61\x01"); // Center align
@@ -1231,6 +1319,22 @@ class ThermalPrintingService {
       `TOTAL: ${this.settings.currency} ${(orderData.total || 0).toFixed(2)}\n`
     );
     commands.push("\x1B\x45\x00"); // Bold off
+
+    // Payment methods (only if non-cash payments exist)
+    if (
+      orderData.paymentMethods &&
+      orderData.paymentMethods.some((payment) => payment.method !== "cash")
+    ) {
+      commands.push("Payment Methods:\n");
+      orderData.paymentMethods.forEach((payment) => {
+        commands.push(
+          `${payment.method.toUpperCase()}: ${
+            this.settings.currency
+          } ${payment.amount.toFixed(2)}\n`
+        );
+      });
+      commands.push("----------------------------------------\n");
+    }
 
     // Footer
     commands.push("\n\x1B\x61\x01"); // Center align
@@ -1828,6 +1932,27 @@ class ThermalPrintingService {
   }
 
   /**
+   * Clear print history for an order (useful for testing or if needed)
+   */
+  clearPrintHistory(orderId = null) {
+    if (orderId) {
+      // Clear specific order
+      const keysToDelete = [];
+      for (const [key] of this.printHistory) {
+        if (key.startsWith(orderId)) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((key) => this.printHistory.delete(key));
+      this.log(`🧹 Print history cleared for order: ${orderId}`);
+    } else {
+      // Clear all print history
+      this.printHistory.clear();
+      this.log("🧹 All print history cleared");
+    }
+  }
+
+  /**
    * Disconnect from QZ Tray
    */
   async disconnect() {
@@ -2355,7 +2480,11 @@ if (typeof window !== "undefined") {
 
   // Expose debug function globally for troubleshooting
   window.debugPrinters = () => printingService.debugPrinterConfiguration();
-  console.log("🔧 Debug function available: window.debugPrinters()");
+  window.clearPrintHistory = (orderId) =>
+    printingService.clearPrintHistory(orderId);
+  console.log(
+    "🔧 Debug functions available: window.debugPrinters(), window.clearPrintHistory(orderId)"
+  );
 }
 
 export default printingService;
