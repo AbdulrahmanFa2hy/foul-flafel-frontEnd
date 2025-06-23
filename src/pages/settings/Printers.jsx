@@ -656,15 +656,21 @@ function Printers() {
     );
   }, []);
 
-  // Memoized test print handler
+  // Memoized test print handler with duplicate prevention
   const testPrint = useCallback(
     async (printer) => {
       try {
-        await printingService.testPrint(printer);
-        toast.success(
-          t("printers.testPrintSent", { printerName: printer.name })
-        );
-      } catch {
+        const result = await printingService.testPrint(printer);
+        if (result !== false) {
+          // false means duplicate job was skipped
+          toast.success(
+            t("printers.testPrintSent", { printerName: printer.name })
+          );
+        } else {
+          console.log("Test print skipped - duplicate job detected");
+        }
+      } catch (error) {
+        console.error("Test print failed:", error);
         toast.error(
           t("printers.testPrintFailed", { printerName: printer.name })
         );

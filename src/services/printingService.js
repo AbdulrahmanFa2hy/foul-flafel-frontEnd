@@ -73,6 +73,10 @@ class ThermalPrintingService {
         this.log("✅ QZ Tray connected successfully");
       }
 
+      // Clear any existing print queue on initialization
+      this.printQueue.clear();
+      this.log("🧹 Print queue cleared");
+
       this.isConnected = true;
       return true;
     } catch (error) {
@@ -167,18 +171,19 @@ class ThermalPrintingService {
         await this.initialize();
       }
 
-      // Create unique job ID to prevent duplicates
+      // Create unique job ID to prevent duplicates (without timestamp for better deduplication)
       const jobId = `${orderData.orderNumber || "unknown"}-${
         printerName || "default"
-      }-${options.type || "customer"}-${Date.now()}`;
+      }-${options.type || "customer"}`;
 
-      // Check if this job is already in progress
-      if (this.printQueue.has(jobId)) {
+      // Check if this job is already in progress (within last 3 seconds)
+      const existingJob = this.printQueue.get(jobId);
+      if (existingJob && Date.now() - existingJob < 3000) {
         this.log("⚠️ Print job already in progress, skipping:", jobId);
         return false;
       }
 
-      // Add to queue
+      // Add to queue with current timestamp
       this.printQueue.set(jobId, Date.now());
 
       try {
@@ -230,7 +235,7 @@ class ThermalPrintingService {
         // Remove from queue after completion
         setTimeout(() => {
           this.printQueue.delete(jobId);
-        }, 2000); // Keep in queue for 2 seconds to prevent rapid duplicates
+        }, 3000); // Keep in queue for 3 seconds to prevent rapid duplicates
       }
     } catch (error) {
       this.log("❌ Print receipt failed:", error);
@@ -565,12 +570,12 @@ class ThermalPrintingService {
             display: flex;
             justify-content: space-between;
             margin-bottom: 0.5mm;
-            font-size: 8px;
+            font-size: 12px;
         }
         
         .total-line.final {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 14px;
             border-top: 1px solid #000;
             padding-top: 1mm;
             margin-top: 1mm;
@@ -580,7 +585,7 @@ class ThermalPrintingService {
             margin-top: 2mm;
             border-top: 1px dashed #000;
             padding-top: 1mm;
-            font-size: 8px;
+            font-size: 12px;
         }
         
         .footer {
@@ -593,7 +598,7 @@ class ThermalPrintingService {
         
         .datetime {
             text-align: center;
-            font-size: 7px;
+            font-size: 10px;
             color: #666;
             margin: 1mm 0;
         }
@@ -1038,13 +1043,10 @@ class ThermalPrintingService {
     <!-- Order Information -->
     <div class="order-info">
         <div class="order-line">
-            <span>Order #:</span>
+             <span>${new Date().toLocaleTimeString()}</span>
             <span>${safeOrderData.orderNumber}</span>
         </div>
-        <div class="order-line">
-            <span>Time:</span>
-            <span>${new Date().toLocaleTimeString()}</span>
-        </div>
+        
         ${
           safeOrderData.custName
             ? `<div class="order-line">

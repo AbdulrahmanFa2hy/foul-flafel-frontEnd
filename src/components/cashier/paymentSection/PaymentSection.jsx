@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,7 @@ function PaymentSection({
     { method: "visa", amount: "" },
   ]);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [hasProcessedPayment, setHasProcessedPayment] = useState(false);
 
   // Calculate tax amount and final total
   const taxAmount = (subtotal * (tax || 0)) / 100;
@@ -157,6 +158,14 @@ function PaymentSection({
       return;
     }
 
+    // Prevent multiple payment processing
+    if (hasProcessedPayment) {
+      console.log("Payment already processed for this order");
+      return;
+    }
+
+    setHasProcessedPayment(true);
+
     try {
       let paymentMethods = [];
 
@@ -226,7 +235,7 @@ function PaymentSection({
         navigate("/menu");
       }, 1500); // Short delay to let the user see the success message
 
-      // Print customer receipt after successful payment
+      // Print customer receipt after successful payment (only once)
       const orderData = {
         ...currentOrder,
         orderNumber:
@@ -244,16 +253,19 @@ function PaymentSection({
         custAddress: currentOrder.custAddress || "",
       };
 
-      // Print customer receipt only after payment
+      // Print customer receipt only after payment (with unique job ID)
       try {
         await printingService.printCustomerReceipt(orderData);
-        // Don't show success message for printing to avoid confusion
+        console.log("Customer receipt printed successfully");
       } catch (error) {
         console.warn("Customer receipt print failed:", error);
         // Don't show error toast to avoid interrupting payment flow
       }
     } catch (error) {
       console.error("Payment failed:", error);
+
+      // Reset payment processing flag on error
+      setHasProcessedPayment(false);
 
       // Enhanced error handling
       let errorMessage = t("payment.paymentFailedRetry");
@@ -291,6 +303,11 @@ function PaymentSection({
       });
     }
   };
+
+  // Reset payment processing flag when order changes
+  useEffect(() => {
+    setHasProcessedPayment(false);
+  }, [currentOrder?._id]);
 
   const handlePrintReceipt = () => {
     if (!currentOrder) {

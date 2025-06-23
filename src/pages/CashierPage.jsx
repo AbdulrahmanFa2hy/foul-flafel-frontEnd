@@ -217,13 +217,16 @@ function CashierPage() {
           }
         }
 
-        // Clear the navigation state to prevent re-printing
+        // Clear the navigation state immediately to prevent re-printing
         window.history.replaceState({}, document.title);
       }
     };
 
-    handleAutoPrint();
-  }, [location.state, orders, t]);
+    // Only run once when component mounts with the right state
+    if (location.state?.fromOrderCreation) {
+      handleAutoPrint();
+    }
+  }, []); // Empty dependency array to run only once
 
   useEffect(() => {
     selectOrderLogic();
