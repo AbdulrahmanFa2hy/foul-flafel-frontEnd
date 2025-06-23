@@ -438,11 +438,17 @@ class ThermalPrintingService {
   generateReceiptHTML(orderData, options = {}) {
     const receiptType = options.type || "customer";
 
+    let htmlContent;
     if (receiptType === "kitchen") {
-      return this.generateKitchenTicketHTML(orderData, options);
+      htmlContent = this.generateKitchenTicketHTML(orderData, options);
     } else {
-      return this.generateCustomerReceiptHTML(orderData, options);
+      htmlContent = this.generateCustomerReceiptHTML(orderData, options);
     }
+
+    // Log the generated HTML for debugging
+    this.logReceiptHTML(htmlContent, receiptType, orderData);
+
+    return htmlContent;
   }
 
   /**
@@ -453,6 +459,14 @@ class ThermalPrintingService {
     const safeOrderData = this.sanitizeOrderData(orderData);
     const receiptSettings = this.getReceiptSettings();
     const isCopy = options.isCopy || false;
+
+    // Log customer receipt HTML for debugging
+    console.log(
+      "🧾 Generating Customer Receipt HTML for order:",
+      safeOrderData.orderNumber,
+      "- Copy:",
+      isCopy
+    );
 
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
@@ -788,6 +802,26 @@ class ThermalPrintingService {
             <span>${safeOrderData.cashier}</span>
         </div>
         ${
+          safeOrderData.orderType
+            ? `
+        <div class="order-line">
+            <span>${hasArabic ? "نوع الطلب:" : "Order Type:"}</span>
+            <span>${safeOrderData.orderType}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          safeOrderData.tableNumber
+            ? `
+        <div class="order-line">
+            <span>${hasArabic ? "رقم الطاولة:" : "Table #:"}</span>
+            <span>${safeOrderData.tableNumber}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
           safeOrderData.custName
             ? `
         <div class="order-line">
@@ -988,6 +1022,14 @@ class ThermalPrintingService {
     const receiptSettings = this.getReceiptSettings();
     const isCopy = options.isCopy || false;
 
+    // Log kitchen ticket HTML for debugging
+    console.log(
+      "🍳 Generating Kitchen Ticket HTML for order:",
+      safeOrderData.orderNumber,
+      "- Copy:",
+      isCopy
+    );
+
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
 <head>
@@ -1101,12 +1143,12 @@ class ThermalPrintingService {
         
         .arabic-text {
             direction: rtl;
-            text-align: center;
+            text-align: right;
         }
         
         .english-text {
             direction: ltr;
-            text-align: center;
+            text-align: left;
         }
         
         .copy-tag {
@@ -1156,53 +1198,58 @@ class ThermalPrintingService {
     <!-- Order Information -->
     <div class="order-info">
         <div class="order-line">
-            <span>${hasArabic ? "رقم الطلب:" : "Order #:"}</span>
+            <span>Order #:</span>
             <span>${safeOrderData.orderNumber}</span>
         </div>
         <div class="order-line">
-            <span>${hasArabic ? "الوقت:" : "Time:"}</span>
+            <span>Time:</span>
             <span>${new Date().toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
             })}</span>
         </div>
-        ${
-          safeOrderData.tableNumber
-            ? `<div class="order-line">
-            <span>${hasArabic ? "رقم الطاولة:" : "Table #:"}</span>
-            <span>${safeOrderData.tableNumber}</span>
-        </div>`
-            : ""
-        }
+        
         ${
           safeOrderData.orderType
             ? `<div class="order-line">
-            <span>${hasArabic ? "نوع الطلب:" : "Order Type:"}</span>
+            <span>Type:</span>
             <span>${safeOrderData.orderType}</span>
         </div>`
             : ""
         }
+        
+        ${
+          safeOrderData.tableNumber
+            ? `<div class="order-line">
+            <span>Table:</span>
+            <span>${safeOrderData.tableNumber}</span>
+        </div>`
+            : ""
+        }
+        
         ${
           safeOrderData.custName
             ? `<div class="order-line">
-            <span>${hasArabic ? "العميل:" : "Customer:"}</span>
+            <span>Customer:</span>
             <span>${safeOrderData.custName}</span>
         </div>`
             : ""
         }
+        
         ${
           safeOrderData.custPhone
             ? `<div class="order-line">
-            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
+            <span>Phone:</span>
             <span>${safeOrderData.custPhone}</span>
         </div>`
             : ""
         }
+        
         ${
           safeOrderData.custAddress
             ? `<div class="order-line">
-            <span>${hasArabic ? "العنوان:" : "Address:"}</span>
+            <span>Address:</span>
             <span>${safeOrderData.custAddress}</span>
         </div>`
             : ""
@@ -1541,6 +1588,8 @@ class ThermalPrintingService {
           "001"
       ),
       cashier: String(orderData.cashier || "N/A"),
+      orderType: String(orderData.orderType || orderData.type || ""),
+      tableNumber: String(orderData.tableNumber || orderData.table || ""),
       orderItems: items,
       subtotal: Number(orderData.subtotal) || calculatedSubtotal,
       tax: Number(orderData.tax) || Number(orderData.taxAmount) || 0,
@@ -1551,9 +1600,16 @@ class ThermalPrintingService {
       paymentMethods: Array.isArray(orderData.paymentMethods)
         ? orderData.paymentMethods
         : [],
-      custName: String(orderData.custName || ""),
-      custPhone: String(orderData.custPhone || orderData.custtPhone || ""),
-      custAddress: String(orderData.custAddress || ""),
+      custName: String(orderData.custName || orderData.customerName || ""),
+      custPhone: String(
+        orderData.custPhone ||
+          orderData.custtPhone ||
+          orderData.customerPhone ||
+          ""
+      ),
+      custAddress: String(
+        orderData.custAddress || orderData.customerAddress || ""
+      ),
     };
 
     // Ensure total calculation is correct if missing
@@ -1971,6 +2027,60 @@ class ThermalPrintingService {
       // Clear all print history
       this.printHistory.clear();
       this.log("🧹 All print history cleared");
+    }
+  }
+
+  /**
+   * Log receipt HTML to console for debugging
+   */
+  logReceiptHTML(htmlContent, receiptType, orderData) {
+    if (this.settings.debugMode) {
+      console.log(
+        `\n📄 ====== ${receiptType.toUpperCase()} RECEIPT HTML ======`
+      );
+      console.log(`Order: ${orderData.orderNumber || "N/A"}`);
+      console.log(`Type: ${receiptType}`);
+      console.log(`HTML Length: ${htmlContent.length} characters`);
+      console.log("HTML Content:", htmlContent);
+      console.log(`====== END ${receiptType.toUpperCase()} RECEIPT ======\n`);
+    }
+  }
+
+  /**
+   * Show both receipts in console for debugging
+   */
+  showBothReceiptsInConsole(orderData) {
+    try {
+      console.log("\n🔍 ====== RECEIPT PREVIEW DEBUG ======");
+
+      const safeOrderData = this.sanitizeOrderData(orderData);
+      console.log("📋 Order Data:", safeOrderData);
+
+      // Generate customer receipt
+      const customerHTML = this.generateCustomerReceiptHTML(orderData, {
+        type: "customer",
+      });
+
+      // Generate kitchen ticket
+      const kitchenHTML = this.generateKitchenTicketHTML(orderData, {
+        type: "kitchen",
+      });
+
+      console.log("\n🧾 CUSTOMER RECEIPT:");
+      console.log("==================");
+      console.log(customerHTML);
+
+      console.log("\n🍳 KITCHEN TICKET:");
+      console.log("=================");
+      console.log(kitchenHTML);
+
+      console.log("\n✅ Both receipts generated successfully!");
+      console.log("====== END RECEIPT PREVIEW ======\n");
+
+      return { customerHTML, kitchenHTML };
+    } catch (error) {
+      console.error("❌ Failed to generate receipt previews:", error);
+      return null;
     }
   }
 
@@ -2530,6 +2640,77 @@ class ThermalPrintingService {
     console.log("✅ Copy detection test completed!");
     return true;
   }
+
+  /**
+   * Generate sample order data for testing receipts
+   */
+  generateSampleOrderData() {
+    return {
+      orderNumber: "ORD-12345",
+      cashier: "أحمد محمد",
+      cashierAr: "أحمد محمد",
+      orderType: "Delivery",
+      tableNumber: "15",
+      custName: "محمد العلي",
+      custPhone: "+966-50-123-4567",
+      custAddress: "شارع الملك فهد، حي الصفا، الرياض 12345",
+      orderItems: [
+        {
+          name: "Foul with Tahini",
+          nameAr: "فول بالطحينة",
+          quantity: 2,
+          price: 15.5,
+        },
+        {
+          name: "Falafel Sandwich",
+          nameAr: "ساندويش فلافل",
+          quantity: 1,
+          price: 12.0,
+        },
+        {
+          name: "Arabic Coffee",
+          nameAr: "قهوة عربية",
+          quantity: 3,
+          price: 8.5,
+        },
+        {
+          name: "Hummus Plate",
+          nameAr: "طبق حمص",
+          quantity: 1,
+          price: 18.0,
+        },
+        {
+          name: "Fresh Orange Juice",
+          nameAr: "عصير برتقال طازج",
+          quantity: 2,
+          price: 12.0,
+        },
+      ],
+      subtotal: 102.0,
+      tax: 15.3,
+      discount: 5.0,
+      total: 112.3,
+      paymentMethods: [
+        {
+          method: "cash",
+          amount: 50.0,
+        },
+        {
+          method: "visa",
+          amount: 62.3,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Show demo receipts with comprehensive sample data
+   */
+  showDemoReceipts() {
+    const sampleData = this.generateSampleOrderData();
+    console.log("🎭 ====== DEMO RECEIPTS WITH SAMPLE DATA ======");
+    return this.showBothReceiptsInConsole(sampleData);
+  }
 }
 
 // Create and export service instance
@@ -2551,8 +2732,20 @@ if (typeof window !== "undefined") {
     printingService.clearPrintHistory(orderId);
   window.testCopyDetection = (printerName) =>
     printingService.testCopyDetection(printerName);
+  window.showReceipts = (orderData) =>
+    printingService.showBothReceiptsInConsole(orderData);
+  window.showDemoReceipts = () => printingService.showDemoReceipts();
+  console.log("🔧 Debug functions available:");
+  console.log("   - window.debugPrinters() // Debug printer configuration");
+  console.log("   - window.clearPrintHistory(orderId) // Clear print history");
   console.log(
-    "🔧 Debug functions available: window.debugPrinters(), window.clearPrintHistory(orderId), window.testCopyDetection(printerName)"
+    "   - window.testCopyDetection(printerName) // Test copy detection"
+  );
+  console.log(
+    "   - window.showReceipts(orderData) // Show receipts with your data"
+  );
+  console.log(
+    "   - window.showDemoReceipts() // Show demo receipts with sample data"
   );
 }
 
