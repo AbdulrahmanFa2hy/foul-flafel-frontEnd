@@ -103,6 +103,27 @@ const ReceiptSettingsModal = memo(function ReceiptSettingsModal({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.businessNameAr")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.header.businessNameAr || ""}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          header: {
+                            ...prev.header,
+                            businessNameAr: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
+                      placeholder="اتركه فارغاً لإخفائه"
+                      dir="rtl"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("receiptSettings.address")}
                     </label>
                     <input
@@ -119,6 +140,27 @@ const ReceiptSettingsModal = memo(function ReceiptSettingsModal({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
                       placeholder={t("receiptSettings.leaveEmptyToHide")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.addressAr")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.header.addressAr || ""}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          header: {
+                            ...prev.header,
+                            addressAr: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
+                      placeholder="اتركه فارغاً لإخفائه"
+                      dir="rtl"
                     />
                   </div>
                   <div>
@@ -155,6 +197,24 @@ const ReceiptSettingsModal = memo(function ReceiptSettingsModal({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
                       placeholder={t("receiptSettings.leaveEmptyToHide")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.phoneNumberAr")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.header.phoneAr || ""}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          header: { ...prev.header, phoneAr: e.target.value },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm sm:text-base"
+                      placeholder="اتركه فارغاً لإخفائه"
+                      dir="rtl"
                     />
                   </div>
                   <div>
@@ -268,6 +328,27 @@ const ReceiptSettingsModal = memo(function ReceiptSettingsModal({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
                       placeholder={t("receiptSettings.leaveEmptyToHide")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("receiptSettings.thankYouMessageAr")}
+                    </label>
+                    <input
+                      type="text"
+                      value={receiptSettings.footer.thankYouMessageAr || ""}
+                      onChange={(e) =>
+                        setReceiptSettings((prev) => ({
+                          ...prev,
+                          footer: {
+                            ...prev.footer,
+                            thankYouMessageAr: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
+                      placeholder="اتركه فارغاً لإخفائه"
+                      dir="rtl"
                     />
                   </div>
                   <div>

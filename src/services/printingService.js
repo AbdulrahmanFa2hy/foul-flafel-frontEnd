@@ -346,6 +346,7 @@ class ThermalPrintingService {
   generateCustomerReceiptHTML(orderData) {
     const hasArabic = this.detectArabicContent(orderData);
     const safeOrderData = this.sanitizeOrderData(orderData);
+    const receiptSettings = this.getReceiptSettings();
 
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
@@ -371,17 +372,19 @@ class ThermalPrintingService {
             font-family: ${
               hasArabic
                 ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
-                : "Arial, sans-serif"
+                : "Courier New, monospace"
             };
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 9px;
+            line-height: 1.2;
             color: #000;
             background: #fff;
-            width: ${this.settings.paperWidth}mm;
-            padding: 1mm;
+            width: 72mm;
+            max-width: 72mm;
+            padding: 2mm;
+            margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
-            max-width: ${this.settings.paperWidth}mm;
-            overflow: hidden;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
         
         .header {
@@ -392,22 +395,24 @@ class ThermalPrintingService {
         }
         
         .store-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             margin-bottom: 1mm;
             word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .store-name.arabic {
-            font-size: 14px;
+            font-size: 12px;
             direction: rtl;
             text-align: center;
         }
         
         .store-info {
-            font-size: 9px;
+            font-size: 8px;
             margin-bottom: 0.5mm;
             word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .separator {
@@ -419,7 +424,7 @@ class ThermalPrintingService {
         
         .order-info {
             margin: 2mm 0;
-            font-size: 9px;
+            font-size: 8px;
         }
         
         .order-line {
@@ -427,6 +432,7 @@ class ThermalPrintingService {
             justify-content: space-between;
             margin-bottom: 0.5mm;
             word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .items-section {
@@ -438,7 +444,7 @@ class ThermalPrintingService {
             border-bottom: 1px solid #000;
             padding: 1mm 0;
             font-weight: bold;
-            font-size: 9px;
+            font-size: 8px;
             background: #f5f5f5;
         }
         
@@ -446,31 +452,32 @@ class ThermalPrintingService {
             display: flex;
             border-bottom: 1px dotted #ccc;
             padding: 1mm 0;
-            font-size: 9px;
+            font-size: 8px;
             align-items: flex-start;
         }
         
         .col-item {
             flex: 1;
-            padding-right: 2mm;
+            padding-right: 1mm;
             word-wrap: break-word;
-            overflow: hidden;
+            overflow-wrap: break-word;
+            min-width: 0;
         }
         
         .col-qty {
-            width: 12mm;
+            width: 8mm;
             text-align: center;
             flex-shrink: 0;
         }
         
         .col-price {
-            width: 18mm;
+            width: 14mm;
             text-align: right;
             flex-shrink: 0;
         }
         
         .col-total {
-            width: 20mm;
+            width: 16mm;
             text-align: right;
             flex-shrink: 0;
         }
@@ -478,11 +485,11 @@ class ThermalPrintingService {
         .item-name {
             font-weight: bold;
             word-wrap: break-word;
-            overflow: hidden;
+            overflow-wrap: break-word;
         }
         
         .item-name-secondary {
-            font-size: 8px;
+            font-size: 7px;
             color: #666;
             font-weight: normal;
             margin-top: 0.5mm;
@@ -498,12 +505,12 @@ class ThermalPrintingService {
             display: flex;
             justify-content: space-between;
             margin-bottom: 0.5mm;
-            font-size: 9px;
+            font-size: 8px;
         }
         
         .total-line.final {
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             border-top: 1px solid #000;
             padding-top: 1mm;
             margin-top: 1mm;
@@ -513,7 +520,7 @@ class ThermalPrintingService {
             margin-top: 2mm;
             border-top: 1px dashed #000;
             padding-top: 1mm;
-            font-size: 9px;
+            font-size: 8px;
         }
         
         .footer {
@@ -521,12 +528,12 @@ class ThermalPrintingService {
             margin-top: 3mm;
             padding-top: 2mm;
             border-top: 1px dashed #000;
-            font-size: 9px;
+            font-size: 8px;
         }
         
         .datetime {
             text-align: center;
-            font-size: 8px;
+            font-size: 7px;
             color: #666;
             margin: 1mm 0;
         }
@@ -543,17 +550,17 @@ class ThermalPrintingService {
         
         .customer-info {
             margin: 2mm 0;
-            font-size: 9px;
+            font-size: 8px;
             border-top: 1px dashed #000;
             padding-top: 1mm;
         }
         
         @media print {
             body { 
-                width: ${this.settings.paperWidth}mm; 
+                width: 72mm; 
                 margin: 0;
-                padding: 1mm;
-                max-width: ${this.settings.paperWidth}mm;
+                padding: 2mm;
+                max-width: 72mm;
             }
         }
     </style>
@@ -562,26 +569,62 @@ class ThermalPrintingService {
     <!-- Header Section -->
     <div class="header">
         ${
-          hasArabic
+          hasArabic && receiptSettings.header.businessNameAr
             ? `
-        <div class="store-name arabic">${this.settings.storeNameAr}</div>
-        <div class="store-name english">${this.settings.storeName}</div>
-        <div class="store-info arabic-text">${
-          this.settings.storeAddressAr
-        }</div>
-        <div class="store-info english-text">${this.settings.storeAddress}</div>
-        <div class="store-info">هاتف: ${this.formatPhoneNumber(
-          this.settings.storePhoneAr
-        )}</div>
-        <div class="store-info">Tel: ${this.settings.storePhone}</div>
+        <div class="store-name arabic">${receiptSettings.header.businessNameAr}</div>
+        <div class="store-name english">${receiptSettings.header.businessName}</div>
         `
             : `
-        <div class="store-name">${this.settings.storeName}</div>
-        <div class="store-info">${this.settings.storeAddress}</div>
-        <div class="store-info">Tel: ${this.settings.storePhone}</div>
+        <div class="store-name">${receiptSettings.header.businessName}</div>
         `
         }
-        <div class="store-info">Receipt Type: Customer</div>
+        ${
+          receiptSettings.header.address
+            ? `
+        ${
+          hasArabic && receiptSettings.header.addressAr
+            ? `
+        <div class="store-info arabic-text">${receiptSettings.header.addressAr}</div>
+        <div class="store-info english-text">${receiptSettings.header.address}</div>
+        `
+            : `
+        <div class="store-info">${receiptSettings.header.address}</div>
+        `
+        }
+        `
+            : ""
+        }
+        ${
+          receiptSettings.header.city
+            ? `<div class="store-info">${receiptSettings.header.city}</div>`
+            : ""
+        }
+        ${
+          receiptSettings.header.phone
+            ? `
+        ${
+          hasArabic && receiptSettings.header.phoneAr
+            ? `
+        <div class="store-info">هاتف: ${receiptSettings.header.phoneAr}</div>
+        <div class="store-info">Tel: ${receiptSettings.header.phone}</div>
+        `
+            : `
+        <div class="store-info">Tel: ${receiptSettings.header.phone}</div>
+        `
+        }
+        `
+            : ""
+        }
+        ${
+          receiptSettings.header.taxId
+            ? `<div class="store-info">Tax ID: ${receiptSettings.header.taxId}</div>`
+            : ""
+        }
+        ${
+          receiptSettings.header.customText
+            ? `<div class="store-info">${receiptSettings.header.customText}</div>`
+            : ""
+        }
     </div>
 
     <!-- Order Information -->
@@ -728,16 +771,42 @@ class ThermalPrintingService {
     <!-- Footer -->
     <div class="footer">
         ${
-          hasArabic
+          receiptSettings.footer.thankYouMessage
             ? `
-        <div class="arabic-text">شكراً لزيارتكم!</div>
-        <div class="english-text">Thank you for your visit!</div>
+        ${
+          hasArabic && receiptSettings.footer.thankYouMessageAr
+            ? `
+        <div class="arabic-text">${receiptSettings.footer.thankYouMessageAr}</div>
+        <div class="english-text">${receiptSettings.footer.thankYouMessage}</div>
         `
             : `
-        <div>Thank you for your visit!</div>
+        <div>${receiptSettings.footer.thankYouMessage}</div>
         `
         }
-        <div style="margin-top: 2mm; font-size: 8px;">
+        `
+            : ""
+        }
+        ${
+          receiptSettings.footer.returnPolicy
+            ? `<div style="margin-top: 1mm;">${receiptSettings.footer.returnPolicy}</div>`
+            : ""
+        }
+        ${
+          receiptSettings.footer.customerService
+            ? `<div style="margin-top: 1mm;">${receiptSettings.footer.customerService}</div>`
+            : ""
+        }
+        ${
+          receiptSettings.footer.website
+            ? `<div style="margin-top: 1mm;">${receiptSettings.footer.website}</div>`
+            : ""
+        }
+        ${
+          receiptSettings.footer.customText
+            ? `<div style="margin-top: 1mm;">${receiptSettings.footer.customText}</div>`
+            : ""
+        }
+        <div style="margin-top: 2mm; font-size: 7px;">
             ${hasArabic ? "فاتورة العميل" : "Customer Copy"}
         </div>
     </div>
@@ -751,6 +820,7 @@ class ThermalPrintingService {
   generateKitchenTicketHTML(orderData) {
     const hasArabic = this.detectArabicContent(orderData);
     const safeOrderData = this.sanitizeOrderData(orderData);
+    const receiptSettings = this.getReceiptSettings();
 
     return `<!DOCTYPE html>
 <html dir="${hasArabic ? "rtl" : "ltr"}" lang="${hasArabic ? "ar" : "en"}">
@@ -769,17 +839,19 @@ class ThermalPrintingService {
             font-family: ${
               hasArabic
                 ? "'ArabicFont', Tahoma, 'Arial Unicode MS'"
-                : "Arial, sans-serif"
+                : "Courier New, monospace"
             };
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.3;
             color: #000;
             background: #fff;
-            width: ${this.settings.paperWidth}mm;
-            padding: 1mm;
+            width: 72mm;
+            max-width: 72mm;
+            padding: 2mm;
+            margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
-            max-width: ${this.settings.paperWidth}mm;
-            overflow: hidden;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
         }
         
         .header {
@@ -872,10 +944,10 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: ${this.settings.paperWidth}mm; 
+                width: 72mm; 
                 margin: 0;
-                padding: 1mm;
-                max-width: ${this.settings.paperWidth}mm;
+                padding: 2mm;
+                max-width: 72mm;
             }
         }
     </style>
@@ -886,7 +958,9 @@ class ThermalPrintingService {
         <div class="kitchen-title">${
           hasArabic ? "تذكرة المطبخ" : "KITCHEN TICKET"
         }</div>
-        <div style="font-size: 10px;">${this.settings.storeName}</div>
+        <div style="font-size: 9px;">${
+          receiptSettings.header.businessName
+        }</div>
     </div>
 
     <!-- Order Information -->
@@ -1785,6 +1859,34 @@ class ThermalPrintingService {
     } catch (error) {
       this.log("❌ Failed to get enabled printers:", error);
       return [];
+    }
+  }
+
+  /**
+   * Get QZ Tray connection status
+   */
+  getQZStatus() {
+    try {
+      const isConnected =
+        this.isConnected &&
+        typeof window.qz !== "undefined" &&
+        this.qzInstance &&
+        this.qzInstance.websocket &&
+        this.qzInstance.websocket.isActive();
+
+      return {
+        isConnected,
+        version: typeof window.qz !== "undefined" ? window.qz.version : null,
+        websocketActive: this.qzInstance?.websocket?.isActive() || false,
+      };
+    } catch (error) {
+      this.log("❌ Failed to get QZ status:", error);
+      return {
+        isConnected: false,
+        version: null,
+        websocketActive: false,
+        error: error.message,
+      };
     }
   }
 

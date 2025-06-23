@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thermal Receipt Test - Arabic</title>
+    <style>
+      /* Optimized CSS for 80mm thermal printers */
+      @font-face {
+        font-family: "ArabicFont";
+        src: local("Tahoma"), local("Arial Unicode MS"), local("Segoe UI");
+        unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF,
+          U+FE70-FEFF;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "ArabicFont", Tahoma, "Arial Unicode MS";
+        font-size: 9px;
+        line-height: 1.2;
+        color: #000;
+        background: #fff;
+        width: 72mm; /* Optimized for thermal printing */
+        max-width: 72mm;
+        padding: 2mm;
+        margin: 0 auto;
+        direction: rtl;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        border: 1px solid #ccc; /* For preview only */
+      }
+
+      .header {
+        text-align: center;
+        border-bottom: 1px solid #000;
+        padding-bottom: 2mm;
+        margin-bottom: 2mm;
+      }
+
+      .store-name {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 1mm;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .store-name.arabic {
+        font-size: 12px;
+        direction: rtl;
+        text-align: center;
+      }
+
+      .store-info {
+        font-size: 8px;
+        margin-bottom: 0.5mm;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .separator {
+        text-align: center;
+        margin: 1mm 0;
+        font-size: 8px;
+        overflow: hidden;
+      }
+
+      .order-info {
+        margin: 2mm 0;
+        font-size: 8px;
+      }
+
+      .order-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5mm;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .items-section {
+        margin: 2mm 0;
+      }
+
+      .items-header {
+        display: flex;
+        border-bottom: 1px solid #000;
+        padding: 1mm 0;
+        font-weight: bold;
+        font-size: 8px;
+        background: #f5f5f5;
+      }
+
+      .items-row {
+        display: flex;
+        border-bottom: 1px dotted #ccc;
+        padding: 1mm 0;
+        font-size: 8px;
+        align-items: flex-start;
+      }
+
+      .col-item {
+        flex: 1;
+        padding-right: 1mm;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        min-width: 0;
+      }
+
+      .col-qty {
+        width: 8mm;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .col-price {
+        width: 14mm;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .col-total {
+        width: 16mm;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .item-name {
+        font-weight: bold;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      .item-name-secondary {
+        font-size: 7px;
+        color: #666;
+        font-weight: normal;
+        margin-top: 0.5mm;
+      }
+
+      .totals {
+        border-top: 1px solid #000;
+        margin-top: 2mm;
+        padding-top: 1mm;
+      }
+
+      .total-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5mm;
+        font-size: 8px;
+      }
+
+      .total-line.final {
+        font-weight: bold;
+        font-size: 10px;
+        border-top: 1px solid #000;
+        padding-top: 1mm;
+        margin-top: 1mm;
+      }
+
+      .payment-section {
+        margin-top: 2mm;
+        border-top: 1px dashed #000;
+        padding-top: 1mm;
+        font-size: 8px;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3mm;
+        padding-top: 2mm;
+        border-top: 1px dashed #000;
+        font-size: 8px;
+      }
+
+      .datetime {
+        text-align: center;
+        font-size: 7px;
+        color: #666;
+        margin: 1mm 0;
+      }
+
+      .arabic-text {
+        direction: rtl;
+        text-align: right;
+      }
+
+      .english-text {
+        direction: ltr;
+        text-align: left;
+      }
+
+      .customer-info {
+        margin: 2mm 0;
+        font-size: 8px;
+        border-top: 1px dashed #000;
+        padding-top: 1mm;
+      }
+
+      @media print {
+        body {
+          width: 72mm;
+          margin: 0;
+          padding: 2mm;
+          max-width: 72mm;
+          border: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header Section -->
+    <div class="header">
+      <div class="store-name arabic">مطعم الفول والفلافل</div>
+      <div class="store-name english">Foul & Falafel Restaurant</div>
+      <div class="store-info arabic-text">شارع الملك فهد، الرياض</div>
+      <div class="store-info english-text">King Fahd Street, Riyadh</div>
+      <div class="store-info">هاتف: ٠١١-٤٥٦-٧٨٩٠</div>
+      <div class="store-info">Tel: 011-456-7890</div>
+      <div class="store-info">Tax ID: 300-456-789</div>
+    </div>
+
+    <!-- Order Information -->
+    <div class="order-info">
+      <div class="order-line">
+        <span>Order / رقم الطلب:</span>
+        <span>ORD-3544529</span>
+      </div>
+      <div class="order-line">
+        <span>Cashier / الكاشير:</span>
+        <span>أحمد محمد</span>
+      </div>
+      <div class="datetime">٢٠٢٤/٠١/١٥ - ٠٣:٣٩:٤٧</div>
+    </div>
+
+    <!-- Customer Information -->
+    <div class="customer-info">
+      <div class="order-line">
+        <span>العميل:</span>
+        <span>سعد العتيبي</span>
+      </div>
+      <div class="order-line">
+        <span>الهاتف:</span>
+        <span>٠٥٠-١٢٣-٤٥٦٧</span>
+      </div>
+    </div>
+
+    <div class="separator">* * * * * * * * * * * * * * * * * * * *</div>
+
+    <!-- Items Section -->
+    <div class="items-section">
+      <div class="items-header">
+        <div class="col-item">الصنف</div>
+        <div class="col-qty">الكمية</div>
+        <div class="col-price">السعر</div>
+        <div class="col-total">المجموع</div>
+      </div>
+
+      <div class="items-row">
+        <div class="col-item">
+          <div class="item-name arabic-text">فول بالطحينة</div>
+          <div class="item-name-secondary english-text">Foul with Tahini</div>
+        </div>
+        <div class="col-qty">١</div>
+        <div class="col-price">٤.٠٠</div>
+        <div class="col-total">٤.٠٠</div>
+      </div>
+
+      <div class="items-row">
+        <div class="col-item">
+          <div class="item-name arabic-text">بيض لقمة رمان</div>
+          <div class="item-name-secondary english-text">
+            Egg with Pomegranate Molasses
+          </div>
+        </div>
+        <div class="col-qty">١</div>
+        <div class="col-price">٤.٠٠</div>
+        <div class="col-total">٤.٠٠</div>
+      </div>
+
+      <div class="items-row">
+        <div class="col-item">
+          <div class="item-name arabic-text">لقل مشكل</div>
+          <div class="item-name-secondary english-text">Mixed Falafel</div>
+        </div>
+        <div class="col-qty">١</div>
+        <div class="col-price">٥.٠٠</div>
+        <div class="col-total">٥.٠٠</div>
+      </div>
+
+      <div class="items-row">
+        <div class="col-item">
+          <div class="item-name arabic-text">فل كانتشب مايونيز</div>
+          <div class="item-name-secondary english-text">
+            Falafel with Ketchup & Mayo
+          </div>
+        </div>
+        <div class="col-qty">١</div>
+        <div class="col-price">٤.٠٠</div>
+        <div class="col-total">٤.٠٠</div>
+      </div>
+
+      <div class="items-row">
+        <div class="col-item">
+          <div class="item-name arabic-text">سقعه</div>
+          <div class="item-name-secondary english-text">Saq'ah</div>
+        </div>
+        <div class="col-qty">١</div>
+        <div class="col-price">٤.٠٠</div>
+        <div class="col-total">٤.٠٠</div>
+      </div>
+    </div>
+
+    <!-- Totals Section -->
+    <div class="totals">
+      <div class="total-line">
+        <span>المجموع الفرعي:</span>
+        <span>٢١.٠٠ ريال</span>
+      </div>
+
+      <div class="total-line">
+        <span>الضريبة (١٥%):</span>
+        <span>٣.١٥ ريال</span>
+      </div>
+
+      <div class="total-line">
+        <span>الخصم:</span>
+        <span>-٠.٠٠ ريال</span>
+      </div>
+
+      <div class="total-line final">
+        <span>الإجمالي:</span>
+        <span>٢٤.١٥ ريال</span>
+      </div>
+    </div>
+
+    <!-- Payment Information -->
+    <div class="payment-section">
+      <div style="font-weight: bold; margin-bottom: 1mm">طريقة الدفع:</div>
+      <div class="order-line">
+        <span>نقداً:</span>
+        <span>٢٤.١٥ ريال</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="arabic-text">شكراً لزيارتكم!</div>
+      <div class="english-text">Thank you for your visit!</div>
+      <div style="margin-top: 2mm; font-size: 7px">فاتورة العميل</div>
+    </div>
+  </body>
+</html>
