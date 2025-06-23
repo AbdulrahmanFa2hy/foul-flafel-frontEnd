@@ -378,8 +378,8 @@ class ThermalPrintingService {
             line-height: 1.1;
             color: #000;
             background: #fff;
-            width: 68mm;
-            max-width: 68mm;
+            width: 80mm;
+            max-width: 80mm;
             padding: 1mm;
             margin: 0 auto;
             direction: ${hasArabic ? "rtl" : "ltr"};
@@ -395,7 +395,7 @@ class ThermalPrintingService {
         }
         
         .store-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             margin-bottom: 1mm;
             word-wrap: break-word;
@@ -403,7 +403,7 @@ class ThermalPrintingService {
         }
         
         .store-name.arabic {
-            font-size: 12px;
+            font-size: 14px;
             direction: rtl;
             text-align: center;
         }
@@ -458,14 +458,14 @@ class ThermalPrintingService {
         
         .col-item {
             flex: 1;
-            padding-right: 1mm;
+            padding-right: 0mm;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            min-width: 0;
+            min-width: 30mm;
         }
         
         .col-qty {
-            width: 6mm;
+            width: 12mm;
             text-align: center;
             flex-shrink: 0;
         }
@@ -557,10 +557,10 @@ class ThermalPrintingService {
         
         @media print {
             body { 
-                width: 68mm; 
+                width: 80mm; 
                 margin: 0;
-                padding: 1mm;
-                max-width: 68mm;
+                padding: 1mm 0mm;
+                max-width: 80mm;
             }
         }
     </style>
@@ -1289,12 +1289,21 @@ class ThermalPrintingService {
       ),
       cashier: String(orderData.cashier || "N/A"),
       orderItems: items,
-      subtotal: Number(orderData.subtotal) || calculatedSubtotal,
+      subtotal:
+        Number(orderData.subtotal) ||
+        Number(orderData.subtotalPrice) ||
+        calculatedSubtotal,
       tax: Number(orderData.tax) || Number(orderData.taxAmount) || 0,
       discount:
         Number(orderData.discount) || Number(orderData.discountAmount) || 0,
-      total: Number(orderData.total) || Number(orderData.finalTotal) || 0,
-      paymentMethods: orderData.paymentMethods || [],
+      total:
+        Number(orderData.total) ||
+        Number(orderData.totalPrice) ||
+        Number(orderData.finalTotal) ||
+        0,
+      paymentMethods: Array.isArray(orderData.paymentMethods)
+        ? orderData.paymentMethods
+        : [],
       custName: String(orderData.custName || ""),
       custPhone: String(orderData.custPhone || orderData.custtPhone || ""),
       custAddress: String(orderData.custAddress || ""),
