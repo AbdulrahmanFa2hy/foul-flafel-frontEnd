@@ -30,7 +30,7 @@ const TableCard = ({ table, isSelected, onSelect }) => {
   return (
     <div className="flex flex-col">
       <button
-        className={`border-4 ${getBorderColor()} rounded-lg p-6 transition-all duration-200 
+        className={`border-4 ${getBorderColor()} rounded-lg p-7 transition-all duration-200 
           ${
             isAvailable
               ? "hover:border-green-600 hover:shadow-card-hover"
@@ -44,7 +44,7 @@ const TableCard = ({ table, isSelected, onSelect }) => {
             : t("table.occupied") + " - Go to cashier"
         }
       >
-        <h3 className="text-xl font-medium text-center text-neutral-800">
+        <h3 className="text-3xl font-medium text-center text-neutral-800">
           {tableNumber}
         </h3>
       </button>

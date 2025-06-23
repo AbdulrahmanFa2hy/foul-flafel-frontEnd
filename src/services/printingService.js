@@ -1160,23 +1160,54 @@ class ThermalPrintingService {
     <!-- Order Information -->
     <div class="order-info">
         <div class="order-line">
-            <span>Order #:</span>
+            <span>${hasArabic ? "رقم الطلب:" : "Order #:"}</span>
             <span>${safeOrderData.orderNumber}</span>
         </div>
         <div class="order-line">
-            <span>Time:</span>
+            <span>${hasArabic ? "الوقت:" : "Time:"}</span>
             <span>${new Date().toLocaleTimeString("en-US", {
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
             })}</span>
         </div>
-        
+        ${
+          safeOrderData.tableNumber
+            ? `<div class="order-line">
+            <span>${hasArabic ? "رقم الطاولة:" : "Table #:"}</span>
+            <span>${safeOrderData.tableNumber}</span>
+        </div>`
+            : ""
+        }
+        ${
+          safeOrderData.orderType
+            ? `<div class="order-line">
+            <span>${hasArabic ? "نوع الطلب:" : "Order Type:"}</span>
+            <span>${safeOrderData.orderType}</span>
+        </div>`
+            : ""
+        }
         ${
           safeOrderData.custName
             ? `<div class="order-line">
-            <span>Customer:</span>
+            <span>${hasArabic ? "العميل:" : "Customer:"}</span>
             <span>${safeOrderData.custName}</span>
+        </div>`
+            : ""
+        }
+        ${
+          safeOrderData.custPhone
+            ? `<div class="order-line">
+            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
+            <span>${safeOrderData.custPhone}</span>
+        </div>`
+            : ""
+        }
+        ${
+          safeOrderData.custAddress
+            ? `<div class="order-line">
+            <span>${hasArabic ? "العنوان:" : "Address:"}</span>
+            <span>${safeOrderData.custAddress}</span>
         </div>`
             : ""
         }

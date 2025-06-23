@@ -34,7 +34,7 @@ const TableHeader = ({ seatingType, setSeatingType }) => {
   }, [isRTL]);
 
   return (
-    <div className="px-4 lg:px-6 py-2" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="px-2 lg:px-10 pt-2 pb-1" dir={isRTL ? "rtl" : "ltr"}>
       <div
         className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
           isRTL ? "sm:flex-row-reverse" : ""
@@ -47,7 +47,7 @@ const TableHeader = ({ seatingType, setSeatingType }) => {
           }`}
         >
           <button
-            className={`py-2 px-4 rounded-lg transition-colors ${
+            className={`py-4 px-6 rounded-lg transition-colors ${
               seatingType === "inside"
                 ? "bg-primary-700 text-white"
                 : "bg-white text-primary-800 border border-primary-800"
@@ -57,7 +57,7 @@ const TableHeader = ({ seatingType, setSeatingType }) => {
             {t("table.indoor")}
           </button>
           <button
-            className={`py-2 px-4 rounded-lg transition-colors ${
+            className={`py-4 px-6 rounded-lg transition-colors ${
               seatingType === "outside"
                 ? "bg-primary-700 text-white"
                 : "bg-white text-primary-800 border border-primary-800"

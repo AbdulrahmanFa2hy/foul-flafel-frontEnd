@@ -32,9 +32,9 @@ const TableGrid = ({ tables = [], onSelectTable, seatingType }) => {
   const occupiedTables = tables.filter((table) => table.isAvailable == false);
 
   return (
-    <div className="px-4 py-4 relative h-full">
+    <div className="px-2 py-2 relative h-full">
       {/* Table Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-4 xl:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 ">
         {filteredTables.map((table) => (
           <TableCard
             key={table._id}
