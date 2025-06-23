@@ -245,7 +245,7 @@ function PaymentSection({
         tax: tax || 0,
         discount: discount || 0,
         finalTotal,
-        subtotal: finalTotal - (tax || 0) + (discount || 0), // Calculate subtotal
+        subtotal,
         orderItems: currentOrder.orderItems || [],
         orderItemsData: currentOrder.orderItemsData || [],
         // Include customer data for the receipt

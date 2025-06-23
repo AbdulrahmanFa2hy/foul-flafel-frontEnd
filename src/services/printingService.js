@@ -515,7 +515,6 @@ class ThermalPrintingService {
             display: flex;
             border-bottom: 1px dotted #ccc;
             padding: 1mm 0;
-            font-size: 8px;
             align-items: flex-start;
         }
         
@@ -528,23 +527,24 @@ class ThermalPrintingService {
         }
         
         .col-qty {
-            width: 8mm;
+            width: 12mm;
             text-align: center;
             flex-shrink: 0;
+            font-size: 9px;
         }
         
         .col-price {
-            width: 10mm;
+            width: 12mm;
             text-align: right;
             flex-shrink: 0;
-            font-size: 7px;
+            font-size: 9px;
         }
         
         .col-total {
             width: 12mm;
             text-align: right;
             flex-shrink: 0;
-            font-size: 7px;
+            font-size: 9px;
         }
         
         .item-name {
@@ -570,12 +570,12 @@ class ThermalPrintingService {
             display: flex;
             justify-content: space-between;
             margin-bottom: 0.5mm;
-            font-size: 12px;
+            font-size: 9px;
         }
         
         .total-line.final {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
             padding-top: 1mm;
             margin-top: 1mm;
         }
@@ -584,7 +584,7 @@ class ThermalPrintingService {
             margin-top: 2mm;
             border-top: 1px dashed #000;
             padding-top: 1mm;
-            font-size: 12px;
+            font-size: 9px;
         }
         
         .footer {
@@ -690,47 +690,39 @@ class ThermalPrintingService {
             ? `<div class="store-info">${receiptSettings.header.customText}</div>`
             : ""
         }
-    </div>
-
-    <!-- Order Information -->
-    <div class="order-info">
-        <div class="order-line">
-            <span>Order / رقم الطلب:</span>
-            <span>${safeOrderData.orderNumber}</span>
+        
+        <!-- Order Information -->
+        <div class="store-info">
+            <strong>Order / رقم الطلب: ${safeOrderData.orderNumber}</strong>
         </div>
-        <div class="order-line">
-            <span>Cashier / الكاشير:</span>
-            <span>${safeOrderData.cashier}</span>
+        <div class="store-info">
+            Cashier / الكاشير: ${safeOrderData.cashier}
         </div>
-        <div class="datetime">
+        <div class="store-info">
             ${this.formatDateTime(hasArabic)}
         </div>
-    </div>
-
-    ${
-      safeOrderData.custName || safeOrderData.custPhone
-        ? `
-    <!-- Customer Information -->
-    <div class="customer-info">
+        
+        ${
+          safeOrderData.custName || safeOrderData.custPhone
+            ? `
+        <!-- Customer Information -->
         ${
           safeOrderData.custName
-            ? `<div class="order-line">
-            <span>${hasArabic ? "العميل:" : "Customer:"}</span>
-            <span>${safeOrderData.custName}</span>
+            ? `<div class="store-info">
+            ${hasArabic ? "العميل:" : "Customer:"} ${safeOrderData.custName}
         </div>`
             : ""
         }
         ${
           safeOrderData.custPhone
-            ? `<div class="order-line">
-            <span>${hasArabic ? "الهاتف:" : "Phone:"}</span>
-            <span>${safeOrderData.custPhone}</span>
+            ? `<div class="store-info">
+            ${hasArabic ? "الهاتف:" : "Phone:"} ${safeOrderData.custPhone}
         </div>`
             : ""
+        }`
+            : ""
         }
-    </div>`
-        : ""
-    }
+    </div>
 
     
 
@@ -777,10 +769,16 @@ class ThermalPrintingService {
 
     <!-- Totals Section -->
     <div class="totals">
+        ${
+          safeOrderData.tax > 0 || safeOrderData.discount > 0
+            ? `
         <div class="total-line">
             <span>${hasArabic ? "المجموع الفرعي:" : "Subtotal:"}</span>
             <span>${this.formatAmount(safeOrderData.subtotal, hasArabic)}</span>
         </div>
+        `
+            : ""
+        }
         
         ${
           safeOrderData.tax > 0
@@ -821,9 +819,7 @@ class ThermalPrintingService {
         ? `
     <!-- Payment Information -->
     <div class="payment-section">
-        <div style="font-weight: bold; margin-bottom: 1mm;">${
-          hasArabic ? "طريقة الدفع:" : "Payment Method:"
-        }</div>
+      
         ${safeOrderData.paymentMethods
           .map(
             (payment) => `
@@ -1040,19 +1036,19 @@ class ThermalPrintingService {
     </div>
 
     <!-- Order Information -->
-          <div class="order-info">
-          <div class="order-line">
-              <span>Order #:</span>
-              <span>${safeOrderData.orderNumber}</span>
-          </div>
-          <div class="order-line">
-              <span>Time:</span>
-              <span>${new Date().toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              })}</span>
-          </div>
+    <div class="order-info">
+        <div class="order-line">
+            <span>Order #:</span>
+            <span>${safeOrderData.orderNumber}</span>
+        </div>
+        <div class="order-line">
+            <span>Time:</span>
+            <span>${new Date().toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })}</span>
+        </div>
         
         ${
           safeOrderData.custName
