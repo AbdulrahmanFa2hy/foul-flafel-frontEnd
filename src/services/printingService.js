@@ -671,9 +671,8 @@ class ThermalPrintingService {
         
         .footer {
             text-align: center;
-            margin-top: 3mm;
+            margin-top: 4mm;
             padding-top: 2mm;
-            border-top: 1px dashed #000;
             font-size: 8px;
         }
         
@@ -982,8 +981,8 @@ class ThermalPrintingService {
         ${
           hasArabic && receiptSettings.footer.thankYouMessageAr
             ? `
-        <div class="arabic-text">${receiptSettings.footer.thankYouMessageAr}</div>
-        <div class="english-text">${receiptSettings.footer.thankYouMessage}</div>
+        <div>${receiptSettings.footer.thankYouMessageAr}</div>
+        <div>${receiptSettings.footer.thankYouMessage}</div>
         `
             : `
         <div>${receiptSettings.footer.thankYouMessage}</div>

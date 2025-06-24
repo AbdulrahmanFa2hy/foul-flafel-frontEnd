@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Eye, EyeOff, User, Lock, Shield } from "lucide-react";
 import { login, clearError, clearSuccessMessage } from "../store/authSlice";
 import { ROUTES } from "../utils/constants";
 
@@ -13,6 +14,7 @@ const LoginPage = () => {
     password: "",
   });
   const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -88,90 +90,199 @@ const LoginPage = () => {
   };
 
   return (
-    <div
-      className="min-h-screen bg-neutral-50 flex items-center justify-center p-4"
-      dir={isRTL ? "rtl" : "ltr"}
-    >
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1e62b3] mb-2">
-            {t("login.title")}
+    <div className="min-h-screen bg-gray-50 flex" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Left Panel - System Info */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-900 via-primary-900 to-primary-1000 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
+          <div className="mb-8">
+            <Shield size={80} className="mx-auto mb-4 opacity-90" />
+          </div>
+          <h1 className="text-4xl font-bold mb-4 text-center">
+            {t("login.systemTitle")}
           </h1>
-          <p className="text-neutral-600">{t("login.subtitle")}</p>
+          <p className="text-xl text-center opacity-90 mb-8">
+            {t("login.systemSubtitle")}
+          </p>
+          <div className="grid grid-cols-1 gap-4 text-sm opacity-80">
+            <div className="flex items-center">
+              <div
+                className={`w-2 h-2 bg-white rounded-full ${
+                  isRTL ? "ml-3" : "mr-3"
+                }`}
+              ></div>
+              {t("login.feature1")}
+            </div>
+            <div className="flex items-center">
+              <div
+                className={`w-2 h-2 bg-white rounded-full ${
+                  isRTL ? "ml-3" : "mr-3"
+                }`}
+              ></div>
+              {t("login.feature2")}
+            </div>
+            <div className="flex items-center">
+              <div
+                className={`w-2 h-2 bg-white rounded-full ${
+                  isRTL ? "ml-3" : "mr-3"
+                }`}
+              ></div>
+              {t("login.feature3")}
+            </div>
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
+        {/* Geometric patterns */}
+        <div className="absolute top-0 right-0 w-64 h-64 border border-white/20 rounded-full transform translate-x-32 -translate-y-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 border border-white/20 rounded-full transform -translate-x-24 translate-y-24"></div>
+      </div>
 
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
-            {successMessage}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              className="block text-sm font-medium text-neutral-700 mb-1"
-              htmlFor="username"
-            >
-              {t("login.username")}
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleChange}
-              className={`w-full p-3 border ${
-                formErrors.username ? "border-red-500" : "border-neutral-300"
-              } rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e62b3]`}
-              placeholder={t("login.enterUsername")}
+      {/* Right Panel - Login Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-4">
+            <img
+              src="/transparent-color2.png"
+              alt="Company Logo"
+              className="w-28 h-w-28 object-cover mx-auto mb-4"
             />
-            {formErrors.username && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.username}</p>
-            )}
+            <h2 className="text-2xl font-bold text-primary-1000 mb-2">
+              {t("login.companyName")}
+            </h2>
+            {/* <p className="text-sm text-gray-600">{t("login.subtitle")}</p> */}
           </div>
 
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-1">
-              <label
-                className="block text-sm font-medium text-neutral-700"
-                htmlFor="password"
+          {/* Login Form */}
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
+                {successMessage}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Username Field */}
+              <div>
+                <label
+                  className={`block text-primary-1000 font-medium mb-2 ${
+                    isRTL ? "text-right" : "text-left"
+                  }`}
+                >
+                  {t("login.username")}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder={t("login.enterUsername")}
+                    className={`w-full px-4 py-3 ${
+                      isRTL ? "pr-12 text-right" : "pl-12 text-left"
+                    } bg-gray-50 border ${
+                      formErrors.username ? "border-red-500" : "border-gray-300"
+                    } rounded-md focus:ring-2 focus:ring-primary-900 focus:border-transparent transition-all duration-20 outline-none text-gray-900`}
+                    required
+                  />
+                  <User
+                    className={`absolute ${
+                      isRTL ? "right-4" : "left-4"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400`}
+                    size={18}
+                  />
+                </div>
+                {formErrors.username && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.username}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label
+                  className={`block text-primary-1000 font-medium mb-2 ${
+                    isRTL ? "text-right" : "text-left"
+                  }`}
+                >
+                  {t("login.password")}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={t("login.enterPassword")}
+                    className={`w-full px-4 py-3 ${
+                      isRTL ? "pr-12 pl-12 text-right" : "pl-12 pr-12 text-left"
+                    } bg-gray-50 border ${
+                      formErrors.password ? "border-red-500" : "border-gray-300"
+                    } rounded-md focus:ring-2 focus:ring-primary-900 focus:border-transparent transition-all duration-20 outline-none text-gray-900`}
+                    required
+                  />
+                  <Lock
+                    className={`absolute ${
+                      isRTL ? "right-4" : "left-4"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400`}
+                    size={18}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute ${
+                      isRTL ? "left-4" : "right-4"
+                    } top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors`}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {formErrors.password && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {formErrors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Login Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-tl from-primary-900 via-primary-800  to-primary-1000 text-white py-3 px-4 rounded-md font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {t("login.password")}
-              </label>
+                {loading ? (
+                  <>
+                    <div
+                      className={`w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin ${
+                        isRTL ? "ml-2" : "mr-2"
+                      }`}
+                    ></div>
+                    {t("login.signingIn")}
+                  </>
+                ) : (
+                  t("login.signIn")
+                )}
+              </button>
+            </form>
+
+            {/* Footer */}
+            <div className="mt-3 pt-3 text-center text-sm text-gray-600">
+              {t("login.contactManager")}
             </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full p-3 border ${
-                formErrors.password ? "border-red-500" : "border-neutral-300"
-              } rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e62b3]`}
-              placeholder={t("login.enterPassword")}
-            />
-            {formErrors.password && (
-              <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>
-            )}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#1e62b3] text-white p-3 rounded-lg font-medium transition-colors hover:bg-[#174d8f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e62b3] disabled:opacity-70"
-          >
-            {loading ? t("login.signingIn") : t("login.signIn")}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-neutral-600">{t("login.contactManager")}</p>
+          {/* System Info */}
+          <div className="mt-6 text-center text-xs text-gray-500">
+            <p>{t("login.version")}</p>
+            <p className="mt-1">{t("login.copyright")}</p>
+          </div>
         </div>
       </div>
     </div>

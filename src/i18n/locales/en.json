@@ -288,7 +288,15 @@
     "passwordRequired": "Password is required",
     "enterUsername": "Enter your username",
     "enterPassword": "Enter your password",
-    "contactManager": "Contact your manager to create an account"
+    "contactManager": "Contact your manager to create an account",
+    "systemTitle": "Restaurant POS System",
+    "systemSubtitle": "Advanced Business Management Solutions",
+    "feature1": "Sales and Inventory Management",
+    "feature2": "Comprehensive Financial Reports",
+    "feature3": "Advanced Security System",
+    "companyName": "Smart Summit",
+    "version": "POS System - Version 2.1.0",
+    "copyright": "© 2025 Smart Summit. All rights reserved"
   },
   "table": {
     "title": "Tables",
