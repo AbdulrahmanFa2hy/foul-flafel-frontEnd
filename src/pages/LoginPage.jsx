@@ -92,7 +92,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex" dir={isRTL ? "rtl" : "ltr"}>
       {/* Left Panel - System Info */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-900 via-primary-900 to-primary-1000 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-1000 via-primary-900 to-primary-1000 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
           <div className="mb-8">
