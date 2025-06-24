@@ -42,18 +42,18 @@ function SettingsHome() {
       path: "/settings/shifts",
     },
     {
-      id: "printers",
-      title: t("settings.printerManagement"),
-      description: t("settings.printerManagementDesc"),
-      icon: <FaPrint size={28} className="text-[#F97316]" />,
-      path: "/settings/printers",
-    },
-    {
       id: "tables",
       title: t("settings.tablesManagement"),
       description: t("settings.tablesManagementDesc"),
       icon: <FaTable size={28} className="text-[#6366F1]" />,
       path: "/settings/tables",
+    },
+    {
+      id: "printers",
+      title: t("settings.printerManagement"),
+      description: t("settings.printerManagementDesc"),
+      icon: <FaPrint size={28} className="text-[#F97316]" />,
+      path: "/settings/printers",
     },
   ];
 
@@ -63,12 +63,12 @@ function SettingsHome() {
         {t("settings.title")}
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {settingCategories.map((category) => (
           <Link
             key={category.id}
             to={category.path}
-            className="bg-white rounded-lg shadow-md p-6 animate-fade-in hover:shadow-lg transition-all group"
+            className="bg-white rounded-lg shadow-md px-6 py-8 md:py-12 animate-fade-in hover:shadow-lg transition-all group"
           >
             <div className="flex items-start">
               <div className="p-3 rounded-lg bg-gray-100 mr-4 group-hover:bg-primary-800/10 transition-colors">

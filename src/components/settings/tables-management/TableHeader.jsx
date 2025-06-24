@@ -41,7 +41,7 @@ const TableHeader = ({ searchQuery, onSearchChange, onAddTable }) => {
 
         <button
           onClick={onAddTable}
-          className="group bg-white hover:bg-gray-50 text-primary-700 hover:text-primary-800 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 border border-white/20 hover:border-primary-200"
+          className="group bg-white hover:bg-gray-50 text-primary-800 hover:text-primary-900 font-semibold px-6 py-1 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-3 border border-white/20 hover:border-primary-200"
         >
           <div className="bg-primary-100 group-hover:bg-primary-200 rounded-lg p-2 transition-colors">
             <FaPlus size={14} />

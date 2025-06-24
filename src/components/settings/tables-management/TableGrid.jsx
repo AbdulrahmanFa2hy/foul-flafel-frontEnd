@@ -17,7 +17,7 @@ const TableGrid = ({ tables, onEdit, onDelete }) => {
         <p className="text-gray-500 mb-6 max-w-md mx-auto">
           {t("table.noTablesDescription")}
         </p>
-        <div className="flex items-center justify-center gap-2 text-primary-600">
+        <div className="flex items-center justify-center gap-2 text-primary-800">
           <FaPlus className="text-sm" />
           <span className="text-sm font-medium">
             {t("table.createFirstTable")}
@@ -32,7 +32,7 @@ const TableGrid = ({ tables, onEdit, onDelete }) => {
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          {t("table.showingResults", { count: tables.length })}
+          {t("table.showingResults").replace("{count}", tables.length)}
         </p>
       </div>
 

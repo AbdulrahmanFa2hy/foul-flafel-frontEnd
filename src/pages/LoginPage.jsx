@@ -95,8 +95,8 @@ const LoginPage = () => {
       {/* Left Panel - System Info */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-1000 via-primary-900 to-primary-1000 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 w-full flex flex-col  text-white px-12">
-          <div className="w-96 h-w-96 mx-auto mb-4">
+        <div className="relative z-10 w-full flex flex-col justify-start  text-white px-12">
+          <div className="w-96 h-96 mx-auto mb-4">
             <img
               src={infoImg}
               alt="Card Payment"
@@ -166,7 +166,7 @@ const LoginPage = () => {
             <img
               src="/transparent-color2.png"
               alt="Company Logo"
-              className="w-28 h-w-28 object-cover mx-auto mb-4"
+              className="w-28 object-cover mx-auto mb-4"
             />
             <h2 className="text-2xl font-bold text-primary-1000 mb-2">
               {t("login.companyName")}

@@ -61,7 +61,7 @@ function TablesManagement() {
           </div>
 
           {/* Content Section */}
-          <div className="p-8">
+          <div className="p-2">
             {/* Filters Section */}
             <div className="mb-8">
               <TableFilters

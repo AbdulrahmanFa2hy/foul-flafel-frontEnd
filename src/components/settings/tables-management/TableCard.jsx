@@ -12,19 +12,19 @@ const TableCard = ({ table, onEdit, onDelete }) => {
   const { t } = useTranslation();
 
   return (
-    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-primary-200 overflow-hidden">
+    <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-primary-300 overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-primary-50 to-primary-100 px-6 py-4 border-b border-primary-200">
+      <div className="bg-gradient-to-r from-primary-100 to-primary-200 px-6 py-4 border-b border-primary-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-primary-500 rounded-xl p-3 shadow-lg">
+            <div className="bg-primary-800 rounded-xl p-3 shadow-lg">
               <FaTable className="text-white text-lg" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-primary-800">
+              <h3 className="text-xl font-bold text-primary-900">
                 #{table.number}
               </h3>
-              <p className="text-primary-600 text-sm font-medium">
+              <p className="text-primary-800 text-sm font-medium">
                 {t("table.tableNumber")}
               </p>
             </div>
