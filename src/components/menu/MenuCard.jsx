@@ -41,7 +41,7 @@ const MenuCard = ({ item, addToCart }) => {
 
       <div className="p-1 text-center">
         <h3
-          className={`text-sm font-medium truncate ${
+          className={`text-sm font-medium  ${
             isAvailable ? "text-primary-800" : "text-gray-500"
           }`}
         >

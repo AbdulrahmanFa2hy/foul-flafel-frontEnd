@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, User, Lock, Shield } from "lucide-react";
+import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { login, clearError, clearSuccessMessage } from "../store/authSlice";
 import { ROUTES } from "../utils/constants";
+import infoImg from "../assets/card-payment-53.png";
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
@@ -94,9 +95,13 @@ const LoginPage = () => {
       {/* Left Panel - System Info */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-1000 via-primary-900 to-primary-1000 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
-          <div className="mb-8">
-            <Shield size={80} className="mx-auto mb-4 opacity-90" />
+        <div className="relative z-10 w-full flex flex-col  text-white px-12">
+          <div className="w-96 h-w-96 mx-auto mb-4">
+            <img
+              src={infoImg}
+              alt="Card Payment"
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="text-4xl font-bold mb-4 text-center">
             {t("login.systemTitle")}
@@ -104,30 +109,46 @@ const LoginPage = () => {
           <p className="text-xl text-center opacity-90 mb-8">
             {t("login.systemSubtitle")}
           </p>
-          <div className="grid grid-cols-1 gap-4 text-sm opacity-80">
-            <div className="flex items-center">
+          <div className="grid grid-cols-1 gap-3 text-sm opacity-80">
+            <div className="flex items-start">
               <div
                 className={`w-2 h-2 bg-white rounded-full ${
-                  isRTL ? "ml-3" : "mr-3"
+                  isRTL ? "ml-3 mt-2" : "mr-3 mt-2"
                 }`}
               ></div>
-              {t("login.feature1")}
+              <div>{t("login.feature1")}</div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-start">
               <div
                 className={`w-2 h-2 bg-white rounded-full ${
-                  isRTL ? "ml-3" : "mr-3"
+                  isRTL ? "ml-3 mt-2" : "mr-3 mt-2"
                 }`}
               ></div>
-              {t("login.feature2")}
+              <div>{t("login.feature2")}</div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-start">
               <div
                 className={`w-2 h-2 bg-white rounded-full ${
-                  isRTL ? "ml-3" : "mr-3"
+                  isRTL ? "ml-3 mt-2" : "mr-3 mt-2"
                 }`}
               ></div>
-              {t("login.feature3")}
+              <div>{t("login.feature3")}</div>
+            </div>
+            <div className="flex items-start">
+              <div
+                className={`w-2 h-2 bg-white rounded-full ${
+                  isRTL ? "ml-3 mt-2" : "mr-3 mt-2"
+                }`}
+              ></div>
+              <div>{t("login.feature4")}</div>
+            </div>
+            <div className="flex items-start">
+              <div
+                className={`w-2 h-2 bg-white rounded-full ${
+                  isRTL ? "ml-3 mt-2" : "mr-3 mt-2"
+                }`}
+              ></div>
+              <div>{t("login.feature5")}</div>
             </div>
           </div>
         </div>

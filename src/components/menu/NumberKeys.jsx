@@ -61,18 +61,6 @@ const NumberKeys = ({
       : "0.00";
   }, [calculateTotal]);
 
-  // Memoized current evaluated value
-  const currentValue = useMemo(() => {
-    if (!displayValue) return "";
-    const value = evaluateExpression(displayValue);
-    if (value > 0) {
-      return Number(value)
-        .toFixed(2)
-        .replace(/\.?0+$/, "");
-    }
-    return "";
-  }, [displayValue, evaluateExpression]);
-
   // Reset state when item selection changes
   useEffect(() => {
     if (selectedItemId !== lastSelectedItemId) {

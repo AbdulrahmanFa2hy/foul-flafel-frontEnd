@@ -17,7 +17,7 @@ const ShiftEndSummary = lazy(() =>
   import("../../components/shift/ShiftEndSummary")
 );
 
-function Shifts() {
+function ShiftsManagement() {
   const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const { shifts, loading, error, searchTerm, statusFilter } = useSelector(
@@ -385,4 +385,4 @@ function Shifts() {
   );
 }
 
-export default Shifts;
+export default ShiftsManagement;

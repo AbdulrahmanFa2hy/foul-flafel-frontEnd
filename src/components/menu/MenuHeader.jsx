@@ -22,7 +22,7 @@ const MenuHeader = ({
   const { t } = useTranslation();
 
   return (
-    <div className="p-2 pr-1">
+    <div className="pl-1">
       {/* Categories */}
       {categories && categories.length > 0 && (
         <CategoryTabs
@@ -32,7 +32,7 @@ const MenuHeader = ({
         />
       )}
       {/* Header and Search */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center pe-1">
         <h2 className="hidden sm:block sm:text-2xl font-bold mb-3 w-1/2">
           {getCategoryTitle(activeCategory, categories, t)}
         </h2>

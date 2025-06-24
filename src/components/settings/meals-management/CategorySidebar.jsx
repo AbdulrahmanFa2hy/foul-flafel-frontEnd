@@ -116,13 +116,13 @@ const CategorySidebar = ({
   );
 
   return (
-    <div className="bg-white h-full overflow-hidden p-4 flex flex-col">
+    <div className="bg-white h-full overflow-hidden p-2 px-1 flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800">
           {t("meals.categories")} ({formattedCategories.length + 1})
         </h3>
         <button
-          className="p-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors shadow-sm"
+          className="p-2 rounded-lg text-white bg-primary-700 hover:bg-primary-800 transition-colors shadow-sm"
           onClick={onAddCategory}
           title={t("meals.addCategory")}
         >
@@ -130,7 +130,7 @@ const CategorySidebar = ({
         </button>
       </div>
 
-      <div className="space-y-3 overflow-y-auto flex-1 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="space-y-1 overflow-y-auto flex-1 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* All Meals Option */}
         <div
           className={`p-4 rounded-xl border-2 transition-all ease-in-out duration-300 cursor-pointer hover:shadow-md ${

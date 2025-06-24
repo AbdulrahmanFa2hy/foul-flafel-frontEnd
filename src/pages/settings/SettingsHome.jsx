@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FaUsers, FaBoxes, FaUtensils, FaClock, FaPrint } from "react-icons/fa";
+import {
+  FaUsers,
+  FaBoxes,
+  FaUtensils,
+  FaClock,
+  FaPrint,
+  FaTable,
+} from "react-icons/fa";
 
 function SettingsHome() {
   const { t } = useTranslation();
@@ -40,6 +47,13 @@ function SettingsHome() {
       description: t("settings.printerManagementDesc"),
       icon: <FaPrint size={28} className="text-[#F97316]" />,
       path: "/settings/printers",
+    },
+    {
+      id: "tables",
+      title: t("settings.tablesManagement"),
+      description: t("settings.tablesManagementDesc"),
+      icon: <FaTable size={28} className="text-[#6366F1]" />,
+      path: "/settings/tables",
     },
   ];
 

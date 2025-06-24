@@ -13,7 +13,7 @@ import {
 } from "../../components/settings/users-management";
 import { useUsersManagement } from "../../components/settings/users-management/useUsersManagement";
 
-const Users = () => {
+const UsersManagement = () => {
   const { t } = useTranslation();
   const {
     // State
@@ -132,4 +132,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default UsersManagement;

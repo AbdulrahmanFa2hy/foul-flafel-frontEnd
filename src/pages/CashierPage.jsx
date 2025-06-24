@@ -422,10 +422,11 @@ function CashierPage() {
 
   // Memoized calculation functions
   const calculateSubtotal = useCallback(() => {
-    return orderItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return orderItems.reduce((total, item) => {
+      // Exclude cancelled items from subtotal calculation
+      if (item.isCancelled) return total;
+      return total + item.price * item.quantity;
+    }, 0);
   }, [orderItems]);
 
   const calculateDiscount = useCallback(() => {

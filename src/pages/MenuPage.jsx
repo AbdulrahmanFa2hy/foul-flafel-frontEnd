@@ -428,7 +428,7 @@ const MenuPage = () => {
             setSearchQuery={setSearchQuery}
           />
 
-          <div className="pl-2 pr-1 pb-8">
+          <div className="p-1 pb-24">
             <MenuGrid menuItems={filteredMenuItems} addToCart={addToCart} />
           </div>
 

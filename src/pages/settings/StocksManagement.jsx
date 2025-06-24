@@ -16,7 +16,7 @@ import {
 // Lazy load stock form
 const StockForm = lazy(() => import("../../components/settings/StockForm"));
 
-function Stock() {
+function StocksManagement() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { stocks, loading, error, searchTerm, paymentTypeFilter } = useSelector(
@@ -455,4 +455,4 @@ function Stock() {
   );
 }
 
-export default Stock;
+export default StocksManagement;

@@ -76,7 +76,7 @@ const CategoryTabs = React.memo(
     }, [categories, activeCategory, handleCategoryClick, getCategoryStyles]);
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap gap-2 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:flex-wrap gap-[6px] mb-2">
         {renderedCategories}
       </div>
     );

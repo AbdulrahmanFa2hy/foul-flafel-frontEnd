@@ -421,7 +421,7 @@ const PrinterForm = ({
   );
 };
 
-function Printers() {
+function PrintersManagement() {
   const { t } = useTranslation();
   const [printers, setPrinters] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -867,4 +867,4 @@ function Printers() {
   );
 }
 
-export default Printers;
+export default PrintersManagement;

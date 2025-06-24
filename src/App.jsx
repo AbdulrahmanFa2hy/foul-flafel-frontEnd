@@ -14,11 +14,12 @@ import MainSidebar from "./components/common/MainSidebar";
 import MenuPage from "./pages/MenuPage";
 import TablePage from "./pages/TablePage";
 import HistoryPage from "./pages/HistoryPage";
-import Users from "./pages/settings/Users";
-import Stock from "./pages/settings/Stock";
-import Meals from "./pages/settings/Meals";
-import Shifts from "./pages/settings/Shifts";
-import Printers from "./pages/settings/Printers";
+import Users from "./pages/settings/UsersManagement";
+import Stock from "./pages/settings/StocksManagement";
+import Meals from "./pages/settings/MealsManagement";
+import Shifts from "./pages/settings/ShiftsManagement";
+import Printers from "./pages/settings/PrintersManagement";
+import Tables from "./pages/settings/TablesManagement";
 import SettingsHome from "./pages/settings/SettingsHome";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -102,6 +103,7 @@ const AppLayout = () => {
           <Route path="/settings/meals" element={<Meals />} />
           <Route path="/settings/shifts" element={<Shifts />} />
           <Route path="/settings/printers" element={<Printers />} />
+          <Route path="/settings/tables" element={<Tables />} />
         </Routes>
       </main>
 

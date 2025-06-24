@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { createTable } from "../../store/tableSlice";
+import { createTable, updateTable } from "../../store/tableSlice";
 import { FaTimes } from "react-icons/fa";
 
-const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
+const AddTableModal = ({
+  isOpen,
+  onClose,
+  tables,
+  seatingType,
+  editingTable,
+}) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.table);
@@ -23,18 +29,26 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
     }));
   }, [seatingType]);
 
-  // Calculate next table number when modal opens
+  // Handle form data when modal opens
   useEffect(() => {
-    if (isOpen && tables.length > 0) {
-      // Get the highest table number and add 1
-      const tableNumbers = tables.map((table) => parseInt(table.number) || 0);
-      const maxNumber = Math.max(...tableNumbers);
-      setFormData((prev) => ({
-        ...prev,
-        number: maxNumber + 1,
-      }));
+    if (isOpen) {
+      if (editingTable) {
+        // If editing, populate form with existing data
+        setFormData({
+          number: editingTable.number.toString(),
+          location: editingTable.location,
+        });
+      } else if (tables.length > 0) {
+        // If adding new, calculate next table number
+        const tableNumbers = tables.map((table) => parseInt(table.number) || 0);
+        const maxNumber = Math.max(...tableNumbers);
+        setFormData((prev) => ({
+          ...prev,
+          number: maxNumber + 1,
+        }));
+      }
     }
-  }, [isOpen, tables]);
+  }, [isOpen, tables, editingTable]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,8 +68,18 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
       errors.number = t("table.tableNumberRequired");
     } else if (parseInt(formData.number) <= 0) {
       errors.number = t("table.tableNumberMustBePositive");
-    } else if (tables.some((table) => table.number == formData.number)) {
-      errors.number = t("table.tableNumberExists");
+    } else {
+      // Check if table number already exists (only for new tables or different number)
+      const tableNumber = parseInt(formData.number);
+      const existingTable = tables.find(
+        (table) => table.number === tableNumber
+      );
+      if (
+        existingTable &&
+        (!editingTable || existingTable.number !== editingTable.number)
+      ) {
+        errors.number = t("table.tableNumberExists");
+      }
     }
 
     // Validate location
@@ -79,11 +103,20 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
     try {
       // Convert number to integer
       const tableData = {
-        ...formData,
         number: parseInt(formData.number),
+        location: formData.location,
       };
 
-      await dispatch(createTable(tableData)).unwrap();
+      if (editingTable) {
+        await dispatch(
+          updateTable({
+            tableNumber: editingTable.number,
+            tableData,
+          })
+        ).unwrap();
+      } else {
+        await dispatch(createTable(tableData)).unwrap();
+      }
 
       // Reset form and close modal on success
       setFormData({
@@ -93,7 +126,7 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
       setFormErrors({});
       onClose();
     } catch (error) {
-      console.error("Failed to create table:", error);
+      console.error("Failed to save table:", error);
     }
   };
 
@@ -114,7 +147,7 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-neutral-800">
-            {t("table.addTable")}
+            {editingTable ? t("table.editTable") : t("table.addTable")}
           </h2>
           <button
             onClick={handleClose}
@@ -196,7 +229,13 @@ const AddTableModal = ({ isOpen, onClose, tables, seatingType }) => {
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:opacity-70"
               >
-                {loading ? t("table.adding") : t("table.addTable")}
+                {loading
+                  ? editingTable
+                    ? t("table.updating")
+                    : t("table.adding")
+                  : editingTable
+                  ? t("table.updateTable")
+                  : t("table.addTable")}
               </button>
             </div>
           </form>

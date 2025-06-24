@@ -11,9 +11,7 @@ const MealCard = memo(({ meal, onClick }) => (
         className="w-full h-20 object-cover rounded-t-md"
       />
       <div className="p-1 text-center">
-        <h3 className="text-sm font-medium text-primary-800 truncate">
-          {meal.name}
-        </h3>
+        <h3 className="text-sm font-medium text-primary-800">{meal.name}</h3>
         <p className="text-sm font-semibold text-neutral-700">
           {meal.price} {meal.currency || "AED"}
         </p>

@@ -17,14 +17,9 @@ const MenuSidebarItem = ({ item, updateQuantity, isSelected, onSelect }) => {
   const isRTL = i18n.language === "ar";
 
   const handleQuantityChange = (change) => {
-    const currentQuantity = item.quantity || 0;
-    const newQuantity = currentQuantity + change;
-
-    if (newQuantity >= 0) {
-      // Ensure quantity is valid (rounded for validation)
-      Math.round(newQuantity * 100) / 100;
-      updateQuantity(item.id || item._id, change);
-    }
+    // Simply pass the change to updateQuantity
+    // The MenuPage updateQuantity function handles removal when quantity becomes <= 0
+    updateQuantity(item.id || item._id, change);
   };
 
   const handleItemClick = () => {

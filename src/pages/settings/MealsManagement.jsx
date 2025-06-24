@@ -14,7 +14,7 @@ import {
 } from "../../components/settings/meals-management";
 import { useMealsManagement } from "../../components/settings/meals-management/useMealsManagement";
 
-const Meals = () => {
+const MealsManagement = () => {
   const { t } = useTranslation();
   const {
     // State
@@ -84,7 +84,7 @@ const Meals = () => {
 
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto [scrollbar-width:none] [::-webkit-scrollbar]:hidden">
-        <div className="w-full px-2 sm:px-3 lg:px-1 xl:px-3 py-4">
+        <div className="w-full px-2 sm:px-3 lg:px-1 py-2">
           {/* Header with Search, Refresh, and Add Meal Button */}
           <div className="flex items-center justify-between gap-2 sm:gap-4 mb-6">
             <div className="flex-1 max-w-md">
@@ -216,4 +216,4 @@ const Meals = () => {
   );
 };
 
-export default Meals;
+export default MealsManagement;
