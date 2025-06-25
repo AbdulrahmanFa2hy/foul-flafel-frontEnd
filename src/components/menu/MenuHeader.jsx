@@ -22,7 +22,7 @@ const MenuHeader = ({
   const { t } = useTranslation();
 
   return (
-    <div className="pl-1">
+    <div className="pl-1 pt-1">
       {/* Categories */}
       {categories && categories.length > 0 && (
         <CategoryTabs

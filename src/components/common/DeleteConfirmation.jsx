@@ -15,10 +15,10 @@ const DeleteConfirmation = ({
       <div className="space-y-4">
         <p className="text-gray-600 text-start">{message}</p>
 
-        <div className="flex justify-end space-x-3 pt-4">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
-            className="btn-outline"
+            className="bg-neutral-200 text-neutral-800 px-5 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onCancel}
             disabled={loading}
           >
