@@ -411,7 +411,16 @@
     "receiptPrinted": "Receipt printed successfully!",
     "printFailed": "Failed to print receipt",
     "kitchenTicketPrinted": "Kitchen ticket printed successfully!",
-    "kitchenPrintFailed": "Failed to print kitchen ticket"
+    "kitchenPrintFailed": "Failed to print kitchen ticket",
+    "cancelOrder": "Cancel Order",
+    "cancelling": "Cancelling...",
+    "confirmCancelOrder": "Are you sure you want to cancel this order?",
+    "orderCancelledSuccessfully": "Order cancelled successfully!",
+    "failedToCancelOrder": "Failed to cancel order",
+    "orderAlreadyCancelled": "Order is already cancelled",
+    "orderAutoCancelled": "Order automatically cancelled",
+    "cannotCancelPaidOrder": "Cannot cancel a paid order",
+    "cannotAddToCancelledOrder": "Cannot add items to a cancelled order"
   },
   "numberKeys": {
     "input": "Input",
@@ -459,7 +468,11 @@
     "customerReceiptFailed": "Failed to print customer receipt",
     "kitchenTicketPrinted": "Kitchen ticket printed successfully!",
     "kitchenTicketFailed": "Failed to print kitchen ticket",
-    "bothReceiptsPrinted": "Both receipts printed successfully!"
+    "bothReceiptsPrinted": "Both receipts printed successfully!",
+    "cannotPayCancelledOrder": "Cannot pay for a cancelled order",
+    "cannotPrintCancelledOrder": "Cannot print cancelled order",
+    "orderCancelled": "Order Cancelled",
+    "cannotPrintCancelled": "Cannot Print (Cancelled)"
   },
   "settings": {
     "title": "Settings",

@@ -155,6 +155,10 @@ export const cancelOrder = createAsyncThunk(
       const response = await api.patch(
         `${API_ENDPOINTS.ORDER}/${orderId}/cancel`
       );
+
+      // Invalidate meals cache since ingredients/stock may have changed
+      invalidateMealsCache();
+
       return response.data;
     } catch (error) {
       return rejectWithValue(

@@ -10,7 +10,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
-import { FaArrowLeft, FaTimes } from "react-icons/fa";
+import { FaArrowLeft, FaTimes, FaPlus } from "react-icons/fa";
+import { TbCancel } from "react-icons/tb";
+
 import printingService from "../services/printingService";
 import CategoryTabs from "../components/common/CategoryTabs";
 import SearchInput from "../components/common/SearchInput";
@@ -26,6 +28,7 @@ import {
   setSelectedOrder,
   addMealToOrder,
   deleteMealFromOrder,
+  cancelOrder,
 } from "../store/orderSlice";
 
 // Lazy load heavy components
@@ -74,6 +77,7 @@ function CashierPage() {
   // Per-order state management
   const [orderStates, setOrderStates] = useState({});
   const [mealOperationLoading, setMealOperationLoading] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   // Memoized user role checks
   const needsShiftManagement = useMemo(() => {
@@ -101,6 +105,37 @@ function CashierPage() {
     if (!currentOrder?._id) return { tax: "", discount: "" };
     return orderStates[currentOrder._id] || { tax: "", discount: "" };
   }, [currentOrder?._id, orderStates]);
+
+  // Check if current order has any uncancelled items
+  const hasUncancelledItems = useMemo(() => {
+    if (!currentOrder?.orderItems) return false;
+    return currentOrder.orderItems.some((item) => !item.isCancelled);
+  }, [currentOrder?.orderItems]);
+
+  // Auto-cancel order when all items are cancelled
+  useEffect(() => {
+    const autoCancel = async () => {
+      if (
+        currentOrder &&
+        !currentOrder.isCancelled &&
+        currentOrder.orderItems &&
+        currentOrder.orderItems.length > 0 &&
+        !hasUncancelledItems
+      ) {
+        try {
+          setCancellingOrder(true);
+          await dispatch(cancelOrder(currentOrder._id)).unwrap();
+          toast.success(t("cashier.orderAutoCancelled"), { duration: 3000 });
+        } catch (error) {
+          console.error("Failed to auto-cancel order:", error);
+        } finally {
+          setCancellingOrder(false);
+        }
+      }
+    };
+
+    autoCancel();
+  }, [hasUncancelledItems, currentOrder, dispatch, t]);
 
   // Load cached data and fetch fresh data
   const loadData = useCallback(() => {
@@ -313,6 +348,12 @@ function CashierPage() {
         return;
       }
 
+      // Prevent adding items to cancelled orders
+      if (currentOrder.isCancelled) {
+        toast.error(t("cashier.cannotAddToCancelledOrder"));
+        return;
+      }
+
       setMealOperationLoading(true);
       try {
         const existingOrderItem = currentOrder.orderItems?.find(
@@ -468,6 +509,38 @@ function CashierPage() {
     setIsMenuOpen((prev) => !prev);
   }, []);
 
+  // Memoized cancel order function
+  const handleCancelOrder = useCallback(async () => {
+    if (!currentOrder) {
+      toast.error(t("cashier.noOrderSelected"));
+      return;
+    }
+
+    if (currentOrder.isCancelled) {
+      toast.warning(t("cashier.orderAlreadyCancelled"));
+      return;
+    }
+
+    // Prevent cancelling if order is already paid
+    if (currentOrder.isPaid) {
+      toast.error(t("cashier.cannotCancelPaidOrder"));
+      return;
+    }
+
+    if (window.confirm(t("cashier.confirmCancelOrder"))) {
+      setCancellingOrder(true);
+      try {
+        await dispatch(cancelOrder(currentOrder._id)).unwrap();
+        toast.success(t("cashier.orderCancelledSuccessfully"));
+      } catch (error) {
+        console.error("Failed to cancel order:", error);
+        toast.error(t("cashier.failedToCancelOrder"));
+      } finally {
+        setCancellingOrder(false);
+      }
+    }
+  }, [currentOrder, dispatch, t]);
+
   // Show loading if shift is still being checked for users who need shift management
   if (needsShiftManagement && shiftLoading) {
     return (
@@ -505,16 +578,66 @@ function CashierPage() {
         <div className="w-full px-1 sm:px-2 lg:px-1 xl:px-2 pb-4 pt-2">
           <CashierHeader selectedOrder={currentOrder} />
 
-          {/* Search and Add Meal Button */}
-          <div className="flex items-center gap-2 sm:gap-4 mb-6">
+          {/* Search and Action Buttons */}
+          <div className="flex items-center gap-1 sm:gap-2 mb-6">
+            {/* Cancel Order Button */}
+            <button
+              onClick={handleCancelOrder}
+              disabled={
+                !currentOrder ||
+                currentOrder.isCancelled ||
+                currentOrder.isPaid ||
+                cancellingOrder
+              }
+              className={`btn text-white whitespace-nowrap text-sm sm:text-base px-2 sm:px-4 py-2 ${
+                !currentOrder ||
+                currentOrder.isCancelled ||
+                currentOrder.isPaid ||
+                cancellingOrder
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
+              title={
+                currentOrder?.isPaid
+                  ? t("cashier.cannotCancelPaidOrder")
+                  : t("cashier.cancelOrder")
+              }
+            >
+              {cancellingOrder ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span className="hidden lg:inline">
+                    {t("cashier.cancelling")}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <TbCancel className="lg:hidden text-2xl" />
+
+                  <span className="hidden lg:inline">
+                    {t("cashier.cancelOrder")}
+                  </span>
+                </>
+              )}
+            </button>
+
             <div className="flex-1">
               <SearchInput value={searchTerm} onChange={handleSearch} />
             </div>
+
+            {/* Add Meal Button */}
             <button
               onClick={toggleMenu}
-              className="btn bg-primary-700 text-white hover:bg-primary-800 whitespace-nowrap text-sm sm:text-base px-2 sm:px-4 py-2"
+              className="btn bg-primary-700 text-white hover:bg-primary-800 whitespace-nowrap px-2 sm:px-4 py-2"
             >
-              {isMenuOpen ? t("cashier.closeMenu") : t("cashier.addMeal")}
+              <FaPlus
+                className={`lg:hidden text-2xl ${
+                  isMenuOpen && "rotate-45 "
+                } transition-transform duration-300`}
+              />
+              <span className="hidden lg:inline">
+                {isMenuOpen ? t("cashier.closeMenu") : t("cashier.addMeal")}
+              </span>
             </button>
           </div>
 
@@ -549,6 +672,7 @@ function CashierPage() {
               removeFromOrder={removeFromOrder}
               canDeleteMeals={canDeleteMeals}
               canDecreaseQuantity={canDecreaseQuantity}
+              currentOrder={currentOrder}
             />
 
             {/* Payment Section with Lazy Loading */}

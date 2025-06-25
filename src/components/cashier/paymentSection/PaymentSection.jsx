@@ -152,6 +152,12 @@ function PaymentSection({
       return;
     }
 
+    // Check if order is cancelled
+    if (currentOrder.isCancelled) {
+      toast.error(t("payment.cannotPayCancelledOrder"));
+      return;
+    }
+
     // Check if order is already paid
     if (currentOrder.isPaid) {
       toast.error(t("payment.orderAlreadyPaid"));
@@ -318,6 +324,12 @@ function PaymentSection({
       return;
     }
 
+    // Prevent printing cancelled orders
+    if (currentOrder.isCancelled) {
+      toast.error(t("payment.cannotPrintCancelledOrder"));
+      return;
+    }
+
     // Allow printing even before payment - useful for kitchen tickets and pre-payment receipts
     setIsPrintModalOpen(true);
   };
@@ -407,15 +419,24 @@ function PaymentSection({
       <div className="space-y-3">
         <button
           onClick={handlePayment}
-          disabled={loading || !currentOrder || currentOrder?.isPaid}
+          disabled={
+            loading ||
+            !currentOrder ||
+            currentOrder?.isPaid ||
+            currentOrder?.isCancelled
+          }
           className={`w-full py-3 px-4 rounded-md transition-colors font-medium ${
             currentOrder?.isPaid
               ? "bg-green-100 text-green-800 cursor-not-allowed"
+              : currentOrder?.isCancelled
+              ? "bg-red-100 text-red-800 cursor-not-allowed"
               : "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           }`}
         >
           {currentOrder?.isPaid
             ? t("payment.orderAlreadyPaid")
+            : currentOrder?.isCancelled
+            ? t("payment.orderCancelled")
             : loading
             ? t("payment.processing")
             : `${t("payment.pay")} ${finalTotal.toFixed(2)} AED`}
@@ -423,9 +444,16 @@ function PaymentSection({
 
         <button
           onClick={handlePrintReceipt}
-          className="w-full py-2 px-4 bg-primary-700 text-white rounded-md hover:bg-primary-800 transition-colors"
+          disabled={currentOrder?.isCancelled}
+          className={`w-full py-2 px-4 rounded-md transition-colors ${
+            currentOrder?.isCancelled
+              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+              : "bg-primary-700 text-white hover:bg-primary-800"
+          }`}
         >
-          {currentOrder?.isPaid
+          {currentOrder?.isCancelled
+            ? t("payment.cannotPrintCancelled")
+            : currentOrder?.isPaid
             ? t("payment.printReceipt")
             : t("payment.printPreview")}
         </button>

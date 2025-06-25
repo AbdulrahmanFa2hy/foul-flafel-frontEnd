@@ -405,7 +405,16 @@
     "receiptPrinted": "تم طباعة الفاتورة بنجاح!",
     "printFailed": "فشل في طباعة الفاتورة",
     "kitchenTicketPrinted": "تم طباعة تذكرة المطبخ بنجاح!",
-    "kitchenPrintFailed": "فشل في طباعة تذكرة المطبخ"
+    "kitchenPrintFailed": "فشل في طباعة تذكرة المطبخ",
+    "cancelOrder": "إلغاء الطلب",
+    "cancelling": "جاري الإلغاء...",
+    "confirmCancelOrder": "هل أنت متأكد من أنك تريد إلغاء هذا الطلب؟",
+    "orderCancelledSuccessfully": "تم إلغاء الطلب بنجاح!",
+    "failedToCancelOrder": "فشل في إلغاء الطلب",
+    "orderAlreadyCancelled": "تم إلغاء الطلب بالفعل",
+    "orderAutoCancelled": "تم إلغاء الطلب تلقائياً",
+    "cannotCancelPaidOrder": "لا يمكن إلغاء طلب مدفوع",
+    "cannotAddToCancelledOrder": "لا يمكن إضافة عناصر إلى طلب ملغي"
   },
   "numberKeys": {
     "input": "الإدخال",
@@ -453,7 +462,11 @@
     "customerReceiptFailed": "فشل في طباعة إيصال العميل",
     "kitchenTicketPrinted": "تم طباعة تذكرة المطبخ بنجاح!",
     "kitchenTicketFailed": "فشل في طباعة تذكرة المطبخ",
-    "bothReceiptsPrinted": "تم طباعة كلا الإيصالين بنجاح!"
+    "bothReceiptsPrinted": "تم طباعة كلا الإيصالين بنجاح!",
+    "cannotPayCancelledOrder": "لا يمكن دفع طلب ملغي",
+    "cannotPrintCancelledOrder": "لا يمكن طباعة طلب ملغي",
+    "orderCancelled": "الطلب ملغي",
+    "cannotPrintCancelled": "لا يمكن الطباعة (ملغي)"
   },
   "settings": {
     "title": "الإعدادات",

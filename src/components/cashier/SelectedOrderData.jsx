@@ -152,6 +152,7 @@ const SelectedOrderData = memo(function SelectedOrderData({
   removeFromOrder,
   canDeleteMeals,
   canDecreaseQuantity,
+  currentOrder,
 }) {
   const { t } = useTranslation();
 
@@ -302,7 +303,9 @@ const SelectedOrderData = memo(function SelectedOrderData({
               const mealId = getMealId(item);
               const currentInputValue =
                 quantityInputs[uniqueKey] || item.quantity.toString();
-              const isCancelled = item.isCancelled || false;
+              // Treat item as cancelled if order is cancelled OR if individual item is cancelled
+              const isCancelled =
+                currentOrder?.isCancelled || item.isCancelled || false;
 
               // Stable key based on order index to maintain position
               const stableKey = `order_item_${
