@@ -95,21 +95,24 @@ const LoginPage = () => {
       {/* Left Panel - System Info */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-1000 via-primary-900 to-primary-1000 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10 w-full flex flex-col justify-start  text-white px-12">
-          <div className="w-96 h-96 mx-auto mb-4">
+        <div className="relative z-10 w-full flex flex-col justify-start  text-white ">
+          <div className="w-80 h-80 2xl:w-96 2xl:h-96 mx-auto mb-4">
             <img
               src={infoImg}
               alt="Card Payment"
               className="w-full h-full object-cover"
             />
           </div>
-          <h1 className="text-4xl font-bold mb-4 text-center">
-            {t("login.systemTitle")}
+          <h1 className="text-3xl xl:text-4xl font-bold mb-4 text-center px-4">
+            {t("login.companyName")} - {t("login.systemTitle")}
           </h1>
-          <p className="text-xl text-center opacity-90 mb-8">
+          {/* <h2 className="text-2xl font-bold text-primary-1000 mb-2">
+              {t("login.companyName")}
+            </h2> */}
+          <p className="text-xl text-center opacity-90 mb-6 xl:mb-8">
             {t("login.systemSubtitle")}
           </p>
-          <div className="grid grid-cols-1 gap-3 text-sm opacity-80">
+          <div className="grid grid-cols-1 gap-3 text-sm opacity-80 px-6">
             <div className="flex items-start">
               <div
                 className={`w-2 h-2 bg-white rounded-full ${
@@ -159,23 +162,19 @@ const LoginPage = () => {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-3 sm:p-4 pb-0">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-4">
             <img
               src="/transparent-color2.png"
               alt="Company Logo"
-              className="w-28 object-cover mx-auto mb-4"
+              className="w-36 object-cover mx-auto mb-4"
             />
-            <h2 className="text-2xl font-bold text-primary-1000 mb-2">
-              {t("login.companyName")}
-            </h2>
-            {/* <p className="text-sm text-gray-600">{t("login.subtitle")}</p> */}
           </div>
 
           {/* Login Form */}
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 md:p-8">
             {error && (
               <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
                 {error}
