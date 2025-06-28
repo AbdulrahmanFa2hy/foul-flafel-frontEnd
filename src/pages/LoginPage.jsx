@@ -106,9 +106,6 @@ const LoginPage = () => {
           <h1 className="text-3xl xl:text-4xl font-bold mb-4 text-center px-4">
             {t("login.companyName")} - {t("login.systemTitle")}
           </h1>
-          {/* <h2 className="text-2xl font-bold text-primary-1000 mb-2">
-              {t("login.companyName")}
-            </h2> */}
           <p className="text-xl text-center opacity-90 mb-6 xl:mb-8">
             {t("login.systemSubtitle")}
           </p>
@@ -171,8 +168,10 @@ const LoginPage = () => {
               alt="Company Logo"
               className="w-36 object-cover mx-auto mb-4"
             />
+            <h2 className="text-2xl lg:hidden font-bold text-primary-1000 mb-2">
+              {t("login.companyName")}
+            </h2>
           </div>
-
           {/* Login Form */}
           <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 md:p-8">
             {error && (
