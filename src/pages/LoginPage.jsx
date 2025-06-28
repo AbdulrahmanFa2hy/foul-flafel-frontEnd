@@ -173,7 +173,7 @@ const LoginPage = () => {
             </h2>
           </div>
           {/* Login Form */}
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 md:p-8">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-2 py-6 md:p-8">
             {error && (
               <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
                 {error}
