@@ -1,7 +1,7 @@
 // API URLs
-// export const API_BASE_URL = "http://localhost:3333";
-export const API_BASE_URL =
-  "https://foul-flafel-backend-production.up.railway.app";
+export const API_BASE_URL = "http://localhost:3333";
+// export const API_BASE_URL =
+//   "https://foul-flafel-backend-production.up.railway.app";
 
 export const API_ENDPOINTS = {
   LOGIN: "/api/v1/auth/login",
