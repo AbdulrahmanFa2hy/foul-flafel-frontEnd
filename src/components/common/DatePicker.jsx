@@ -140,20 +140,20 @@ function DatePicker({ onDateChange }) {
     <div className="relative" ref={calendarRef} dir={isRTL ? "rtl" : "ltr"}>
       <button
         onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-        className={`flex items-center border border-primary-700 rounded-lg px-4 py-2 bg-white hover:bg-neutral-100 transition-colors min-w-[200px] ${
+        className={`flex items-center border border-primary-700 rounded-lg sm:px-4 p-2 sm:py-2 bg-white hover:bg-neutral-100 transition-colors md:min-w-[200px] ${
           isRTL ? "flex-row-reverse" : ""
         }`}
       >
-        <RiCalendarLine className="text-primary-800" />
+        <RiCalendarLine className="text-primary-800 text-xl" />
         <span
-          className={`text-primary-800 flex-1 ${
+          className={`text-primary-800 flex-1 hidden md:block ${
             isRTL ? "text-right mr-2" : "text-left ml-2"
           }`}
         >
           {getDisplayDate()}
         </span>
         <RiArrowDownSLine
-          className={`text-primary-800 transition-transform duration-200 ${
+          className={`text-primary-800 transition-transform duration-200 hidden md:block ${
             isCalendarOpen ? "rotate-180" : ""
           } ${isRTL ? "mr-2" : "ml-2"}`}
         />

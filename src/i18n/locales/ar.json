@@ -46,7 +46,10 @@
     "results": "نتائج",
     "filtered_by": "مفلترة بواسطة",
     "previous": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "paidOrders": "الطلبات المدفوعة",
+    "cancelledOrders": "الطلبات الملغية",
+    "unpaidOrders": "الطلبات غير المدفوعة"
   },
   "common": {
     "search": "بحث...",
@@ -686,7 +689,8 @@
     "totalSales": "إجمالي المبيعات",
     "cashVariance": "الفرق في النقد",
     "reviewedStartNew": "لقد راجعت - ابدأ وردية جديدة",
-    "shiftCompletedMessage": "تم إكمال ورديتك وتسجيلها. يرجى مراجعة الملخص التفصيلي أدناه."
+    "shiftCompletedMessage": "تم إكمال ورديتك وتسجيلها. يرجى مراجعة الملخص التفصيلي أدناه.",
+    "cancelledOrders": "الطلبات الملغية"
   },
   "shiftGuard": {
     "loading": "جاري التحميل...",
@@ -851,7 +855,8 @@
     "visa": "فيزا",
     "cash": "نقدي",
     "mastercard": "ماستركارد",
-    "unknown": "غير معروف"
+    "unknown": "غير معروف",
+    "cancelled": "ملغي"
   },
   "addMeal": {
     "addMeal": "إضافة وجبة"

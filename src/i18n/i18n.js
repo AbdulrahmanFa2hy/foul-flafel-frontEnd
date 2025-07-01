@@ -19,7 +19,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: "en",
+    fallbackLng: "ar",
+    lng: "ar",
     debug: false,
 
     interpolation: {
@@ -38,7 +39,7 @@ i18n
   });
 
 i18n.on("languageChanged", (lng) => {
-  document.documentElement.setAttribute("dir", "ltr");
+  document.documentElement.setAttribute("dir", lng === "ar" ? "rtl" : "ltr");
   document.documentElement.setAttribute("lang", lng);
 });
 

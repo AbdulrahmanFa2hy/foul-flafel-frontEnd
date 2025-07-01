@@ -216,6 +216,14 @@ function ShiftEndSummary({
                 </div>
                 <div className={`flex justify-between text-start`}>
                   <span className="text-gray-600">
+                    {t("shiftSummary.cancelledOrders")}:
+                  </span>
+                  <span className="font-medium text-red-600">
+                    {shift.cancelledOrdersCount || 0}
+                  </span>
+                </div>
+                <div className={`flex justify-between text-start`}>
+                  <span className="text-gray-600">
                     {t("shiftSummary.unpaidOrders")}:
                   </span>
                   <span className="font-medium text-orange-600">

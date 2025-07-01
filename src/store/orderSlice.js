@@ -44,7 +44,14 @@ export const fetchAllOrders = createAsyncThunk(
   "order/fetchAllOrders",
   async (queryParams = {}, { rejectWithValue }) => {
     try {
-      const { date, cashierId, shiftId, page = 1, size = 100 } = queryParams;
+      const {
+        date,
+        cashierId,
+        shiftId,
+        page = 1,
+        size = 100,
+        status,
+      } = queryParams;
       const params = new URLSearchParams();
 
       // Always set pagination parameters to get more orders
@@ -55,6 +62,7 @@ export const fetchAllOrders = createAsyncThunk(
       if (date) params.append("date", date);
       if (cashierId) params.append("cashierId", cashierId);
       if (shiftId) params.append("shiftId", shiftId);
+      if (status) params.append("status", status);
 
       const queryString = params.toString();
       const url = `${API_ENDPOINTS.ORDER}?${queryString}`;

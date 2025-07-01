@@ -3,17 +3,29 @@ import { useTranslation } from "react-i18next";
 function PaymentBadge({ type }) {
   const { t } = useTranslation();
 
+  // Handle undefined type or status indicators
+  if (!type) return null;
+
+  // Handle special statuses
+  if (type === "CANCELLED") {
+    return (
+      <div className="bg-red-500 text-white rounded-xl text-sm sm:w-2/3 leading-7 m-auto text-center shadow-lg">
+        {t("paymentBadge.cancelled")}
+      </div>
+    );
+  }
+
   // Support multiple payment methods separated by ' & '
   const types = type.split(" & ");
 
   const getClassName = (t) => {
     switch (t.toLowerCase()) {
       case "visa":
-        return "bg-success-700 text-white rounded-xl text-sm w-2/3 leading-7 m-auto text-center shadow-lg";
+        return "bg-success-700 text-white rounded-xl text-sm w-full sm:w-2/3 leading-7 m-auto text-center shadow-lg";
       case "cash":
-        return "bg-warning-700 text-white rounded-xl text-sm w-2/3 leading-7 m-auto text-center shadow-lg";
+        return "bg-warning-700 text-white rounded-xl text-sm w-full sm:w-2/3 leading-7 m-auto text-center shadow-lg";
       default:
-        return "bg-neutral-200 text-neutral-700 rounded-xl text-sm w-2/3 leading-7 m-auto text-center shadow-lg";
+        return "bg-neutral-200 text-neutral-700 rounded-xl text-sm w-full sm:w-2/3 leading-7 m-auto text-center shadow-lg";
     }
   };
 
