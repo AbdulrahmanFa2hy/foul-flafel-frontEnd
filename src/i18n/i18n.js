@@ -39,7 +39,6 @@ i18n
   });
 
 i18n.on("languageChanged", (lng) => {
-  document.documentElement.setAttribute("dir", lng === "ar" ? "rtl" : "ltr");
   document.documentElement.setAttribute("lang", lng);
 });
 

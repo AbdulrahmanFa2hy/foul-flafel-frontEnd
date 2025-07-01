@@ -10,6 +10,7 @@ import {
   isSameDay,
   isWithinInterval,
   isSameMonth,
+  isValid,
 } from "date-fns";
 import { ar } from "date-fns/locale";
 import {
@@ -41,7 +42,31 @@ function DatePicker({ onDateChange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleDateChange = (start, end) => {
+    try {
+      if (start && end && isValid(start) && isValid(end)) {
+        // Format dates in YYYY-MM-DD format for consistent filtering
+        const formatDate = (date) => {
+          return format(date, "yyyy-MM-dd");
+        };
+        onDateChange(`${formatDate(start)} - ${formatDate(end)}`);
+      } else if (start && isValid(start)) {
+        onDateChange(format(start, "yyyy-MM-dd"));
+      } else {
+        onDateChange("");
+      }
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      onDateChange("");
+    }
+  };
+
   const handleDateClick = (date) => {
+    if (!isValid(date)) {
+      console.error("Invalid date selected");
+      return;
+    }
+
     if (!startDate || (startDate && endDate)) {
       // Start new range
       setStartDate(date);
@@ -60,18 +85,6 @@ function DatePicker({ onDateChange }) {
     }
   };
 
-  const handleDateChange = (start, end) => {
-    if (start && end) {
-      const formattedStart = format(start, "d MMM, yyyy", { locale });
-      const formattedEnd = format(end, "d MMM, yyyy", { locale });
-      onDateChange(`${formattedStart} - ${formattedEnd}`);
-    } else if (start) {
-      onDateChange(format(start, "d MMM, yyyy", { locale }));
-    } else {
-      onDateChange("");
-    }
-  };
-
   const handleClear = () => {
     setStartDate(null);
     setEndDate(null);
@@ -84,12 +97,19 @@ function DatePicker({ onDateChange }) {
 
   const getDisplayDate = () => {
     if (!startDate) return t("datePicker.selectDate");
-    if (!endDate) return format(startDate, "d MMM, yyyy", { locale });
-    return `${format(startDate, "d MMM", { locale })} - ${format(
-      endDate,
-      "d MMM",
-      { locale }
-    )}`;
+
+    try {
+      const formatDisplayDate = (date) => {
+        if (!date || !isValid(date)) return "";
+        return format(date, "dd/MM/yyyy", { locale });
+      };
+
+      if (!endDate) return formatDisplayDate(startDate);
+      return `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`;
+    } catch (error) {
+      console.error("Error formatting display date:", error);
+      return t("datePicker.selectDate");
+    }
   };
 
   const monthStart = startOfMonth(currentDate);

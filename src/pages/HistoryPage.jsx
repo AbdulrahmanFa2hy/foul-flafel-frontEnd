@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { format, parse } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 import { fetchAllPayments } from "../store/paymentSlice";
 import { fetchAllOrders } from "../store/orderSlice";
@@ -59,15 +59,23 @@ function HistoryPage() {
 
     // Convert date range to backend format if provided
     if (dateRange) {
-      if (dateRange.includes(" - ")) {
-        // For date range, use the start date
-        const [startStr] = dateRange.split(" - ");
-        const startDate = parse(startStr, "d MMM, yyyy", new Date());
-        fetchParams.date = startDate.toISOString();
-      } else {
-        // Single date
-        const selectedDate = parse(dateRange, "d MMM, yyyy", new Date());
-        fetchParams.date = selectedDate.toISOString();
+      try {
+        if (dateRange.includes(" - ")) {
+          // For date range, use the start date
+          const [startStr] = dateRange.split(" - ");
+          const startDate = parse(startStr, "yyyy-MM-dd", new Date());
+          if (isValid(startDate)) {
+            fetchParams.date = startDate.toISOString();
+          }
+        } else {
+          // Single date
+          const selectedDate = parse(dateRange, "yyyy-MM-dd", new Date());
+          if (isValid(selectedDate)) {
+            fetchParams.date = selectedDate.toISOString();
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing date:", error);
       }
     }
 
@@ -107,7 +115,13 @@ function HistoryPage() {
       return payments.map((payment) => {
         const orderData = payment.orderData || {};
         const createdAt = payment.createdAt || orderData.createdAt;
-        const dateObj = createdAt ? new Date(createdAt) : null;
+        let dateObj = null;
+        try {
+          dateObj = createdAt ? new Date(createdAt) : null;
+          if (dateObj && !isValid(dateObj)) dateObj = null;
+        } catch (error) {
+          console.error("Error creating date object:", error);
+        }
 
         return {
           orderId: orderData.orderCode || "-",
@@ -125,7 +139,14 @@ function HistoryPage() {
       });
     } else {
       return orders.map((order) => {
-        const dateObj = order.createdAt ? new Date(order.createdAt) : null;
+        let dateObj = null;
+        try {
+          dateObj = order.createdAt ? new Date(order.createdAt) : null;
+          if (dateObj && !isValid(dateObj)) dateObj = null;
+        } catch (error) {
+          console.error("Error creating date object:", error);
+        }
+
         return {
           orderId: order.orderCode || "-",
           date: dateObj ? format(dateObj, "d MMM, yyyy", { locale }) : "-",

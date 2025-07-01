@@ -45,7 +45,7 @@ function ShiftsManagement() {
 
   // Helper function to get unique statuses
   const statuses = useMemo(() => {
-    return ["active", "cancelled", "completed"];
+    return ["active", "completed"];
   }, []);
 
   // Filter shifts based on search term, status, and date
@@ -59,41 +59,33 @@ function ShiftsManagement() {
           cashierName.includes(searchTerm.toLowerCase()) ||
           cashierUsername.includes(searchTerm.toLowerCase());
 
-        // Determine shift status
-        let shiftStatus = "completed";
-        if (shift.isCancelled) {
-          shiftStatus = "cancelled";
-        } else if (!shift.endBalance && !shift.cancelledAt) {
-          shiftStatus = "active";
-        }
-
+        // Determine shift status - treat cancelled as completed
+        const shiftStatus =
+          !shift.endBalance && !shift.cancelledAt ? "active" : "completed";
         const matchesStatus = !statusFilter || shiftStatus === statusFilter;
 
         // Date filtering
         let matchesDate = true;
         if (dateFilter) {
           const shiftDate = new Date(shift.createdAt);
+          const shiftDateStr = shiftDate.toISOString().split("T")[0]; // Get YYYY-MM-DD
+
           if (dateFilter.includes(" - ")) {
             // Date range
             const [startStr, endStr] = dateFilter.split(" - ");
             const startDate = new Date(startStr);
             const endDate = new Date(endStr);
-            endDate.setHours(23, 59, 59, 999); // Include full end date
+
+            // Set time to start and end of day
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+
             matchesDate = shiftDate >= startDate && shiftDate <= endDate;
           } else {
             // Single date
             const filterDate = new Date(dateFilter);
-            const shiftDateOnly = new Date(
-              shiftDate.getFullYear(),
-              shiftDate.getMonth(),
-              shiftDate.getDate()
-            );
-            const filterDateOnly = new Date(
-              filterDate.getFullYear(),
-              filterDate.getMonth(),
-              filterDate.getDate()
-            );
-            matchesDate = shiftDateOnly.getTime() === filterDateOnly.getTime();
+            const filterDateStr = filterDate.toISOString().split("T")[0];
+            matchesDate = shiftDateStr === filterDateStr;
           }
         }
 
@@ -122,23 +114,24 @@ function ShiftsManagement() {
   };
 
   const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleDateString(
-      i18n.language === "ar" ? "ar-AE" : "en-US",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
+    const date = new Date(dateString);
+    const time = date
+      .toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
-      }
-    );
+      })
+      .toLowerCase();
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${time} - ${day}/${month}/${year}`;
   };
 
   const getShiftStatus = (shift) => {
-    if (shift.isCancelled) {
-      return { status: t("shifts.cancelled"), color: "red" };
-    } else if (!shift.endBalance && !shift.cancelledAt) {
+    if (!shift.endBalance && !shift.cancelledAt) {
       return { status: t("shifts.active"), color: "green" };
     } else {
       return { status: t("shifts.completed"), color: "blue" };
@@ -150,11 +143,13 @@ function ShiftsManagement() {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const diffMs = end - start;
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `${diffHours}${t("shifts.hours")} ${diffMinutes}${t(
-      "shifts.minutes"
-    )}`;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60))
+      .toString()
+      .padStart(2, "0");
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+      .toString()
+      .padStart(2, "0");
+    return `${hours}:${minutes}`;
   };
 
   if (loading && shifts.length === 0) {
@@ -285,10 +280,14 @@ function ShiftsManagement() {
                         {shiftStatus.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-900">
+                    <td
+                      className={`py-3 px-4 whitespace-nowrap text-sm text-gray-900 `}
+                    >
                       {formatDateTime(shift.createdAt)}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-900">
+                    <td
+                      className={`py-3 px-4 whitespace-nowrap text-sm text-gray-900 `}
+                    >
                       {calculateDuration(
                         shift.createdAt,
                         shift.cancelledAt || shift.updatedAt
@@ -343,28 +342,18 @@ function ShiftsManagement() {
           {t("shifts.showing")} {filteredShifts.length} {t("shifts.of")}{" "}
           {shifts.length} {t("shifts.shiftsText")}
         </p>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="text-center">
             <span className="block text-green-600 font-medium">
-              {
-                shifts.filter(
-                  (s) => !s.isCancelled && !s.endBalance && !s.cancelledAt
-                ).length
-              }
+              {shifts.filter((s) => !s.endBalance && !s.cancelledAt).length}
             </span>
             <span className="text-gray-500">{t("shifts.active")}</span>
           </div>
           <div className="text-center">
             <span className="block text-blue-600 font-medium">
-              {shifts.filter((s) => s.endBalance && !s.isCancelled).length}
+              {shifts.filter((s) => s.endBalance || s.cancelledAt).length}
             </span>
             <span className="text-gray-500">{t("shifts.completed")}</span>
-          </div>
-          <div className="text-center">
-            <span className="block text-red-600 font-medium">
-              {shifts.filter((s) => s.isCancelled).length}
-            </span>
-            <span className="text-gray-500">{t("shifts.cancelled")}</span>
           </div>
         </div>
       </div>
