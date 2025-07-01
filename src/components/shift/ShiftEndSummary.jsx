@@ -43,12 +43,12 @@ function ShiftEndSummary({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-1 sm:p-4 z-50">
       <div
         className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="p-2 sm:p-6 pt-0">
+        <div className="p-2 pt-3 sm:p-6 sm:pt-0">
           {/* Header with close button */}
           <div
             className={`flex justify-between items-center mb-6 ${
@@ -144,7 +144,7 @@ function ShiftEndSummary({
           </div>
 
           {/* Detailed Shift Summary */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
+          <div className="bg-gray-50 rounded-lg sm:p-6 mb-6">
             <h4
               className={`text-lg font-semibold text-gray-900 mb-4 ${
                 isRTL ? "text-right" : "text-left"

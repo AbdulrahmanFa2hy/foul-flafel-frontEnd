@@ -183,12 +183,14 @@ function StocksManagement() {
   return (
     <div className="animate-fade-in p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">{t("stock.title")}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+          {t("stock.title")}
+        </h1>
         <button
-          className="px-4 py-2 rounded-md text-white font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 bg-primary-800 hover:bg-primary-800 focus:ring-primary-800/50 flex items-center"
+          className="px-2 sm:px-4 py-2 text-sm sm:text-base rounded-md text-white font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 bg-primary-800 hover:bg-primary-800 focus:ring-primary-800/50 flex items-center"
           onClick={() => handleOpenForm()}
         >
-          <FaPlus className="mr-2" /> {t("stock.addStock")}
+          <FaPlus className="sm:mr-2" /> {t("stock.addStock")}
         </button>
       </div>
 
@@ -211,19 +213,21 @@ function StocksManagement() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 pl-10 w-full"
           />
         </div>
-        <select
-          value={paymentTypeFilter}
-          onChange={handlePaymentTypeChange}
-          className="px-3 py-2 border border-gray-300 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 sm:w-40"
-        >
-          <option value="">{t("stock.allPayments")}</option>
-          {paymentTypes.map((type) => (
-            <option key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </option>
-          ))}
-        </select>
-        <DatePicker onDateChange={handleDateChange} />
+        <div className="flex gap-2">
+          <select
+            value={paymentTypeFilter}
+            onChange={handlePaymentTypeChange}
+            className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 sm:w-40"
+          >
+            <option value="">{t("stock.allPayments")}</option>
+            {paymentTypes.map((type) => (
+              <option key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
+          <DatePicker onDateChange={handleDateChange} />
+        </div>
       </div>
 
       {/* Stock table */}
@@ -410,12 +414,12 @@ function StocksManagement() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-6">
+      <div className="flex justify-between items-center mt-6 text-xs sm:text-sm">
         <p className="text-sm text-gray-500">
           {t("stock.showing")} {filteredStocks.length} {t("stock.of")}{" "}
           {stocks.length} {t("stock.items")}
         </p>
-        <div className="flex space-x-2">
+        <div className="flex sm:space-x-2">
           <button
             className="btn-outline px-3 py-1 disabled:opacity-50"
             disabled

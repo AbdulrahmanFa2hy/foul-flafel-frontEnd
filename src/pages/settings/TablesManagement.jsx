@@ -48,43 +48,41 @@ function TablesManagement() {
       className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50"
       dir={isRTL ? "rtl" : "ltr"}
     >
-      <div className="">
-        {/* Main Content Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-primary-800 to-primary-900 px-8 py-6">
-            <TableHeader
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              onAddTable={() => handleOpenModal()}
+      {/* Main Content Card */}
+      <div className="overflow-hidden">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-primary-800 to-primary-900 px-8 py-6">
+          <TableHeader
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            onAddTable={() => handleOpenModal()}
+          />
+        </div>
+
+        {/* Content Section */}
+        <div className="p-2">
+          {/* Filters Section */}
+          <div className="mb-8">
+            <TableFilters
+              filters={filters}
+              onFilterChange={handleFilterChange}
             />
           </div>
 
-          {/* Content Section */}
-          <div className="p-2">
-            {/* Filters Section */}
-            <div className="mb-8">
-              <TableFilters
-                filters={filters}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
-
-            {/* Tables Grid Section */}
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center py-12">
-                  <Loading />
-                </div>
-              }
-            >
-              <TableGrid
-                tables={tables}
-                onEdit={handleOpenModal}
-                onDelete={handleDeleteClick}
-              />
-            </Suspense>
-          </div>
+          {/* Tables Grid Section */}
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loading />
+              </div>
+            }
+          >
+            <TableGrid
+              tables={tables}
+              onEdit={handleOpenModal}
+              onDelete={handleDeleteClick}
+            />
+          </Suspense>
         </div>
       </div>
 

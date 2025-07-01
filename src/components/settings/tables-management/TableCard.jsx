@@ -14,7 +14,7 @@ const TableCard = ({ table, onEdit, onDelete }) => {
   return (
     <div className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-primary-300 overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-primary-100 to-primary-200 px-6 py-4 border-b border-primary-300">
+      <div className="bg-gradient-to-r from-primary-100 to-primary-200 px-3 md:px-6 py-4 border-b border-primary-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-primary-800 rounded-xl p-3 shadow-lg">
@@ -36,14 +36,14 @@ const TableCard = ({ table, onEdit, onDelete }) => {
               className="bg-blue-500 hover:bg-blue-600 text-white p-2.5 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
               title={t("table.editTable")}
             >
-              <FaEdit size={14} />
+              <FaEdit size={18} />
             </button>
             <button
               onClick={() => onDelete(table)}
               className="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
               title={t("table.deleteTable")}
             >
-              <FaTrash size={14} />
+              <FaTrash size={18} />
             </button>
           </div>
         </div>

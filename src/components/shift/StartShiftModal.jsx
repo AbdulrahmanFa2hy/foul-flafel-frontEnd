@@ -106,7 +106,7 @@ function StartShiftModal({ onClose }) {
               }`}
               placeholder={t("startShift.enterBalance")}
               min="0"
-              step="0.01"
+              step="1"
               required
               disabled={loading}
             />

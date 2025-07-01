@@ -24,9 +24,9 @@ const TableGrid = ({ tables = [], onSelectTable, seatingType }) => {
   };
 
   // Filter tables based on seating type
-  const filteredTables = tables.filter(
-    (table) => table.location === seatingType
-  );
+  const filteredTables = tables
+    .filter((table) => table.location === seatingType)
+    .sort((a, b) => a.number - b.number);
   // Filter tables based on availability
   const freeTables = tables.filter((table) => table.isAvailable);
   const occupiedTables = tables.filter((table) => table.isAvailable == false);
@@ -34,7 +34,7 @@ const TableGrid = ({ tables = [], onSelectTable, seatingType }) => {
   return (
     <div className="px-2 py-2 relative h-full">
       {/* Table Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 ">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-2 ">
         {filteredTables.map((table) => (
           <TableCard
             key={table._id}

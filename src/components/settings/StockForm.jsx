@@ -340,6 +340,18 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
   };
 
   const paymentStatus = getPaymentStatus();
+  const getPaymentStatusText = (status) => {
+    switch (status) {
+      case "Fully Paid":
+        return t("forms.stockForm.fullyPaid");
+      case "Partial Payment":
+        return t("forms.stockForm.partialPayment");
+      case "Not Paid":
+        return t("forms.stockForm.notPaid");
+      default:
+        return status;
+    }
+  };
 
   return (
     <Modal title={getModalTitle()} onClose={onClose}>
@@ -362,7 +374,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+              className={`w-full mb-2 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                 formErrors.name ? "border-red-500" : "border-gray-300"
               }`}
               placeholder={t("forms.stockForm.enterItemName")}
@@ -371,7 +383,9 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               onBlur={handleNameInputBlur}
             />
             {formErrors.name && (
-              <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+              <p className="text-red-500 text-xs mt-1">
+                {t("forms.stockForm.nameRequired")}
+              </p>
             )}
 
             {/* Stock Suggestions Dropdown */}
@@ -409,7 +423,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
 
             {/* Show update mode indicator */}
             {selectedExistingStock && !isNewStock && !isEditing && (
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="my-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-sm text-yellow-800">
                   <strong>{t("forms.stockForm.updateMode")}:</strong>{" "}
                   {t("forms.stockForm.addingToExistingStock")} &quot;
@@ -431,7 +445,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               name="supplierName"
               value={formData.supplierName}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+              className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                 formErrors.supplierName ? "border-red-500" : "border-gray-300"
               }`}
               placeholder={t("forms.stockForm.enterSupplierName")}
@@ -439,13 +453,13 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
             />
             {formErrors.supplierName && (
               <p className="text-red-500 text-xs mt-1">
-                {formErrors.supplierName}
+                {t("forms.stockForm.supplierRequired")}
               </p>
             )}
           </div>
 
           {/* Quantity and Unit */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t("forms.stockForm.quantity")} *{" "}
@@ -459,7 +473,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                 name="quantity"
                 value={formData.quantity}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                   formErrors.quantity ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder={
@@ -473,7 +487,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               />
               {formErrors.quantity && (
                 <p className="text-red-500 text-xs mt-1">
-                  {formErrors.quantity}
+                  {t("forms.stockForm.quantityRequired")}
                 </p>
               )}
             </div>
@@ -485,7 +499,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                 name="unit"
                 value={formData.unit}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                   isViewMode ? "bg-gray-100" : "border-gray-300"
                 }`}
                 required={!isViewMode}
@@ -507,7 +521,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
           </div>
 
           {/* Price Per Unit and Minimum Quantity */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t("forms.stockForm.pricePerUnit")} ($) *
@@ -517,7 +531,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                 name="pricePerUnit"
                 value={formData.pricePerUnit}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                   formErrors.pricePerUnit ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder={t("forms.stockForm.enterPricePerUnit")}
@@ -527,7 +541,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               />
               {formErrors.pricePerUnit && (
                 <p className="text-red-500 text-xs mt-1">
-                  {formErrors.pricePerUnit}
+                  {t("forms.stockForm.priceRequired")}
                 </p>
               )}
             </div>
@@ -551,7 +565,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               />
               {formErrors.minimumQuantity && (
                 <p className="text-red-500 text-xs mt-1">
-                  {formErrors.minimumQuantity}
+                  {t("forms.stockForm.minimumQuantityError")}
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
@@ -562,7 +576,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
 
           {/* Total Calculation Display */}
           {formData.quantity && formData.pricePerUnit && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 my-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-blue-800">
                   {t("forms.stockForm.totalValue")}:
@@ -578,19 +592,12 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
             </div>
           )}
 
-          {/* Manager ID Error Display */}
-          {formErrors.managerId && (
-            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
-              {formErrors.managerId}
-            </div>
-          )}
-
           {/* Payment Information */}
           {(!isEditing ||
             (isEditing && formData.invoiceType === "Postponed")) && (
-            <div className="border-t pt-4">
+            <div className="pt-4">
               {/* Payment Type */}
-              <div className="mb-4">
+              <div className="mb-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t("forms.stockForm.paymentType")}
                 </label>
@@ -598,7 +605,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                   name="invoiceType"
                   value={formData.invoiceType}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                  className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                     isViewMode ? "bg-gray-100" : "bg-gray-100"
                   }`}
                 >
@@ -628,7 +635,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                     name="paidAmount"
                     value={formData.paidAmount}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                    className={`w-full mb-5 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
                       formErrors.paidAmount
                         ? "border-red-500"
                         : "border-gray-300"
@@ -659,7 +666,7 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
               {/* Payment Summary */}
               {formData.quantity && formData.pricePerUnit && (
                 <div
-                  className={`p-4 rounded-md border ${
+                  className={`p-4 mb-2 rounded-md border ${
                     paymentStatus.color === "green"
                       ? "bg-green-50 border-green-200"
                       : paymentStatus.color === "yellow"
@@ -668,6 +675,22 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                   }`}
                 >
                   <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        {t("forms.stockForm.paymentStatus")}:
+                      </span>
+                      <span
+                        className={`ms-2 ${
+                          paymentStatus.color === "green"
+                            ? "text-green-800"
+                            : paymentStatus.color === "yellow"
+                            ? "text-yellow-800"
+                            : "text-red-800"
+                        }`}
+                      >
+                        {getPaymentStatusText(paymentStatus.status)}
+                      </span>
+                    </div>
                     <div>
                       <span
                         className={`font-medium ${
@@ -690,46 +713,26 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
 
           {/* Additional Info for View Mode */}
           {isViewMode && stock && (
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-medium text-gray-800 mb-3">
-                {t("forms.stockForm.additionalInformation")}
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="pt-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
                   <span className="font-medium text-gray-700">
-                    {t("forms.stockForm.created")}:
-                  </span>
-                  <p className="text-gray-600">
+                    {t("forms.stockForm.created")}:{" "}
                     {new Date(stock.createdAt).toLocaleDateString()}
-                  </p>
+                  </span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">
-                    {t("forms.stockForm.lastUpdated")}:
-                  </span>
-                  <p className="text-gray-600">
+                    {t("forms.stockForm.lastUpdated")}:{" "}
                     {new Date(stock.updatedAt).toLocaleDateString()}
-                  </p>
+                  </span>
                 </div>
-                <div></div>
               </div>
             </div>
           )}
 
           {/* Form actions */}
-          <div
-            className={`flex justify-end space-x-3 pt-4 border-t border-gray-200 ${
-              isRTL ? "space-x-reverse" : ""
-            }`}
-          >
-            <button
-              type="button"
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              onClick={onClose}
-              disabled={loading && !isViewMode}
-            >
-              {isViewMode ? t("common.close") : t("common.cancel")}
-            </button>
+          <div className={`flex justify-start gap-3`}>
             {!isViewMode && (
               <button
                 type="submit"
@@ -743,6 +746,14 @@ function StockForm({ stock = null, onClose, isViewMode = false }) {
                   : t("forms.stockForm.createStock")}
               </button>
             )}
+            <button
+              type="button"
+              className="px-10 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              onClick={onClose}
+              disabled={loading && !isViewMode}
+            >
+              {isViewMode ? t("common.close") : t("common.cancel")}
+            </button>
           </div>
         </form>
       </div>

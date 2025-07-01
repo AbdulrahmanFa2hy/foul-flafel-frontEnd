@@ -187,19 +187,21 @@ function ShiftsManagement() {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 pl-10 w-full"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={handleStatusChange}
-          className="px-3 py-2 border border-gray-300 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 sm:w-40"
-        >
-          <option value="">{t("shifts.allStatus")}</option>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {t(`shifts.${status}`)}
-            </option>
-          ))}
-        </select>
-        <DatePicker onDateChange={handleDateChange} />
+        <div className="flex gap-4">
+          <select
+            value={statusFilter}
+            onChange={handleStatusChange}
+            className="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-800/50 focus:border-primary-800 sm:w-40"
+          >
+            <option value="">{t("shifts.allStatus")}</option>
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {t(`shifts.${status}`)}
+              </option>
+            ))}
+          </select>
+          <DatePicker onDateChange={handleDateChange} />
+        </div>
       </div>
 
       {/* Shifts table */}
@@ -207,25 +209,25 @@ function ShiftsManagement() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.cashier")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.status")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.startTime")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.duration")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.startBalance")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.endBalance")}
               </th>
-              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4">
+              <th className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 min-w-32">
                 {t("shifts.orders")}
               </th>
               <th className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider py-3 px-4 text-center">
