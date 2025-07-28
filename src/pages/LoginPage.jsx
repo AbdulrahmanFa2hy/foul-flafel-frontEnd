@@ -299,8 +299,10 @@ const LoginPage = () => {
 
           {/* System Info */}
           <div className="mt-6 text-center text-xs text-gray-500">
-            <p>{t("login.version")}</p>
-            <p className="mt-1">{t("login.copyright")}</p>
+            {/* <p>{t("login.version")}</p> */}
+            {/* <p className="mt-1">{t("login.copyright")}</p> */}
+            <p>يمكنك تسجيل الدخول عن طريق ادخال كلمة <b>كاشير</b> او <b>ادمن</b></p>
+            <p>الباسوورد <b>123456</b></p>
           </div>
         </div>
       </div>
