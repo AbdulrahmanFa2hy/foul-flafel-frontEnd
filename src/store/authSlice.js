@@ -1,13 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 import { API_ENDPOINTS } from "../utils/constants";
+import i18n from "../i18n/i18n";
 
 // Async thunk for login
 export const login = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await api.post(API_ENDPOINTS.LOGIN, credentials);
+      const response = await api.post(API_ENDPOINTS.LOGIN, credentials, {
+        params: { lang: i18n.resolvedLanguage || i18n.language },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(
