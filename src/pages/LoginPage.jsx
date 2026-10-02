@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, User, Lock } from "lucide-react";
+import { Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
 import { login, clearError, clearSuccessMessage } from "../store/authSlice";
 import { ROUTES } from "../utils/constants";
 import infoImg from "../assets/card-payment-53.png";
+import { demoAccounts } from "../config/demoAccounts";
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
@@ -16,6 +17,7 @@ const LoginPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [demoRole, setDemoRole] = useState(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -78,6 +80,8 @@ const LoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
+    setDemoRole(null);
 
     // Validate form
     const errors = validateForm();
@@ -88,6 +92,13 @@ const LoginPage = () => {
 
     // Dispatch login action
     dispatch(login(formData));
+  };
+
+  const handleDemoLogin = (account) => {
+    if (loading) return;
+    setFormErrors({});
+    setDemoRole(account.role);
+    dispatch(login({ username: account.login, password: account.password }));
   };
 
   return (
@@ -290,6 +301,38 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
+
+            <section className="mt-6 border-t border-gray-200 pt-5" aria-labelledby="demo-accounts-title">
+              <h3 id="demo-accounts-title" className="font-semibold text-primary-1000">
+                {t("login.demoAccountsTitle")}
+              </h3>
+              <p className="mt-1 mb-3 text-sm text-gray-500">
+                {t("login.demoAccountsDescription")}
+              </p>
+              <div className="space-y-2">
+                {demoAccounts.map((account) => (
+                  <button
+                    key={account.role}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleDemoLogin(account)}
+                    aria-label={t("login.tryDemoRole", { role: t(`login.demoRoles.${account.role}`) })}
+                    className="w-full flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-start transition-colors hover:border-primary-900 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-primary-1000">
+                        {t(`login.demoRoles.${account.role}`)} <span className="font-normal text-gray-500" dir="ltr">({account.role})</span>
+                      </span>
+                      <span className="block text-xs text-gray-500" dir="ltr">{account.login}</span>
+                    </span>
+                    <span className="flex items-center gap-2 text-sm text-primary-900">
+                      {loading && demoRole === account.role ? t("login.signingIn") : t("login.tryDemoAccount")}
+                      <LogIn size={16} aria-hidden="true" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
 
             {/* Footer */}
             <div className="mt-3 pt-3 text-center text-sm text-gray-600">
