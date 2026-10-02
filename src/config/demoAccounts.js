@@ -6,11 +6,6 @@ export const demoAccounts = [
     "password": "xTiKylwvqBLiRZXBycg"
   },
   {
-    "role": "admin",
-    "login": "audit-admin",
-    "password": "qITv323zQAuCWKLJJYM"
-  },
-  {
     "role": "cashier",
     "login": "audit-cashier",
     "password": "yWYrW1beYJXV-jPcgq4"

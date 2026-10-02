@@ -291,7 +291,7 @@
     "demoAccountsDescription": "اختر دورًا للدخول مباشرة. هذه الحسابات مشتركة للتجربة.",
     "tryDemoAccount": "دخول",
     "tryDemoRole": "الدخول بحساب {{role}} التجريبي",
-    "demoRoles": { "manager": "المدير", "admin": "المسؤول", "cashier": "الكاشير" },
+    "demoRoles": { "manager": "المدير", "cashier": "الكاشير" },
     "systemTitle": "نقاط البيع للمطاعم",
     "systemSubtitle": "حلول متقدمة لإدارة الأعمال التجارية",
     "feature1": "إدارة شاملة للمبيعات والمخزون مع تتبع المخزون في الوقت الفعلي",

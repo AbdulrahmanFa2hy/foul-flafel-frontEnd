@@ -297,7 +297,7 @@
     "demoAccountsDescription": "Choose a role to sign in instantly. These accounts are shared for testing.",
     "tryDemoAccount": "Sign in",
     "tryDemoRole": "Sign in as demo {{role}}",
-    "demoRoles": { "manager": "Manager", "admin": "Admin", "cashier": "Cashier" },
+    "demoRoles": { "manager": "Manager", "cashier": "Cashier" },
     "systemTitle": "Restaurant POS System",
     "systemSubtitle": "Advanced Business Management Solutions",
     "feature1": "Complete Sales & Inventory Management with Real-time Stock Tracking",
